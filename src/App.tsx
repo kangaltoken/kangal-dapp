@@ -1,43 +1,25 @@
 import { useEffect, useState } from "react";
-import Web3Modal from "web3modal";
-import WalletConnectProvider from "@walletconnect/web3-provider";
-import { ethers } from "ethers";
-
-const providerOptions = {
-  walletconnect: {
-    package: WalletConnectProvider,
-    options: {
-      infuraId: "9f0c48b0a30441c8b0f736595f426577",
-    },
-  },
-};
+import useWeb3Modal from "./hooks/useWeb3Modal";
 
 function App() {
-  async function showModal() {
-    const web3Modal = new Web3Modal({
-      cacheProvider: true,
-      providerOptions,
-    });
-    web3Modal.clearCachedProvider();
-    const web3Provider = await web3Modal.connect();
-    const provider = new ethers.providers.Web3Provider(web3Provider);
-    let address = await provider.getSigner().getAddress();
-    selectedWalletSet(address);
-  }
+  const web3Modal = useWeb3Modal();
 
   useEffect(() => {
-    async function connectOnStart() {
-      const web3Modal = new Web3Modal({
-        cacheProvider: true,
-        providerOptions,
-      });
-      const web3Provider = await web3Modal.connect();
-      const provider = new ethers.providers.Web3Provider(web3Provider);
-      let address = await provider.getSigner().getAddress();
-      selectedWalletSet(address);
-    }
-    connectOnStart();
+    web3Modal.login();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    async function setAddress() {
+      let address = await web3Modal.provider?.getSigner().getAddress();
+      if (address) {
+        selectedWalletSet(address);
+      } else {
+        selectedWalletSet("");
+      }
+    }
+    setAddress();
+  }, [web3Modal.provider]);
 
   const [selectedWallet, selectedWalletSet] = useState<string>("");
 
@@ -62,10 +44,16 @@ function App() {
 
       <div className="mt-4 flex justify-center">
         <button
-          onClick={showModal}
+          onClick={web3Modal.login}
           className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded"
         >
           Connect wallet
+        </button>
+        <button
+          onClick={web3Modal.logout}
+          className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded"
+        >
+          Disconnect wallet
         </button>
       </div>
       <div className="mt-3">
