@@ -28,10 +28,13 @@ const useWalletStore = create<WalletStore>((set) => ({
     try {
       const web3Provider = await web3Modal.connect();
       const provider = new ethers.providers.Web3Provider(web3Provider);
-      set({ provider: provider });
       const address = await provider.getSigner().getAddress();
-      set({ address: address });
-      set({ hasPendingConnect: false });
+      set({
+        provider: provider,
+        address: address,
+        hasPendingConnect: false,
+        networkWarning: null,
+      });
     } catch (error) {
       console.log(error);
       set({ hasPendingConnect: false });
@@ -51,34 +54,42 @@ const providerOptions = {
     },
   },
 };
-
 const web3Modal = new Web3Modal({
   cacheProvider: true,
   providerOptions,
 });
 
-const windowProvider = new ethers.providers.Web3Provider(
-  window.ethereum,
-  "any"
-);
-windowProvider.on("network", (newNetwork, _) => {
-  let state = useWalletStore.getState();
+if (window.ethereum) {
+  const windowProvider = new ethers.providers.Web3Provider(
+    window.ethereum,
+    "any"
+  );
+  windowProvider.on("network", (newNetwork, _) => {
+    let state = useWalletStore.getState();
 
-  if (newNetwork.chainId !== state.requiredNetwork.chainId) {
-    useWalletStore.setState({
-      networkWarning: `Please switch network to ${state.requiredNetwork.name}`,
-    });
-  } else {
-    state.connect();
-    useWalletStore.setState({ networkWarning: null });
-  }
-});
-window.ethereum.on("accountsChanged", (accounts: string[]) => {
-  if (accounts.length > 0) {
-    useWalletStore.getState().connect();
-  } else {
-    useWalletStore.getState().disconnect();
-  }
-});
+    console.log("network");
+
+    if (newNetwork.chainId !== state.requiredNetwork.chainId) {
+      useWalletStore.setState({
+        hasPendingConnect: false,
+        networkWarning: `Please switch network to ${state.requiredNetwork.name}`,
+      });
+    } else {
+      state.connect();
+    }
+  });
+  window.ethereum.on("accountsChanged", (accounts: string[]) => {
+    if (accounts.length > 0) {
+      useWalletStore.getState().connect();
+    } else {
+      useWalletStore.getState().disconnect();
+    }
+  });
+} else {
+  useWalletStore.setState({
+    hasPendingConnect: false,
+    networkWarning: "Please install Metamask",
+  });
+}
 
 export default useWalletStore;

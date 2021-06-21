@@ -3,13 +3,8 @@ module.exports = {
   // https://tailwindcss.com/docs/just-in-time-mode
   // mode: "jit",
   theme: {
-    extend: {
-      colors: {
-        body: "#F1F1F2",
-        darkBlue: "#1C1C2A",
-        orange: "#DE7028",
-        green: "#45A709",
-      },
+    fontFamily: {
+      sans: ["Gilroy"],
     },
     screens: {
       sm: "640px",
@@ -30,6 +25,15 @@ module.exports = {
         md: "100%",
         lg: "1024px",
         xl: "1280px",
+      },
+    },
+    extend: {
+      colors: {
+        body: "#333333",
+        mainbg: "#F1F1F2",
+        darkBlue: "#1C1C2A",
+        orange: "#DE7028",
+        green: "#45A709",
       },
     },
   },

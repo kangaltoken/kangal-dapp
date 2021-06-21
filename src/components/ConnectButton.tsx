@@ -1,5 +1,5 @@
 import useWalletStore from "../store/walletStore";
-import { ReactComponent as Spinner } from "../images/spinner.svg";
+import { ReactComponent as Spinner } from "../assets/images/spinner.svg";
 
 export default function ConnectButton() {
   const walletStore = useWalletStore();
@@ -23,7 +23,7 @@ export default function ConnectButton() {
         <button
           onClick={walletStore.connect}
           className={
-            "text-white truncate py-2 px-4 w-40 rounded-lg transition-all hover:bg-opacity-80 " +
+            "text-white font-semibold truncate py-2 px-4 w-40 rounded-lg transition-all hover:bg-opacity-80 " +
             (walletStore.address ? "bg-green " : "bg-orange ") +
             (walletStore.networkWarning ? "hidden" : "block")
           }
