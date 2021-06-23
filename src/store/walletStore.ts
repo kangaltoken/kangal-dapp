@@ -67,8 +67,6 @@ if (window.ethereum) {
   windowProvider.on("network", (newNetwork, _) => {
     let state = useWalletStore.getState();
 
-    console.log("network");
-
     if (newNetwork.chainId !== state.requiredNetwork.chainId) {
       useWalletStore.setState({
         hasPendingConnect: false,

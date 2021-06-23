@@ -1,11 +1,11 @@
-//import { useEffect } from "react";
-
-//import { MainToken__factory } from "./typechain/factories/MainToken__factory";
-//const mainTokenAddress = "0xa9a96A85A6253fBA6c79211B84370D3601142653";
+import { useEffect } from "react";
 import useWalletStore from "./store/walletStore";
+import useStakeStore from "./store/stakeStore";
+import { ethers } from "ethers";
 
 import ConnectButton from "./components/ConnectButton";
-import PoolInfoBox from "./components/PoolInfoBox";
+import InfoBox from "./components/InfoBox";
+import StakeAndEarnInfo from "./components/StakeAndEarnInfo";
 
 import { ReactComponent as Logo } from "./assets/images/kangal-logo.svg";
 import { ReactComponent as SteakLogo } from "./assets/images/steak-logo.svg";
@@ -14,49 +14,31 @@ import { ReactComponent as DollarIcon } from "./assets/images/dollar-icon.svg";
 import { ReactComponent as BlueCircle } from "./assets/images/blue-circle.svg";
 import { ReactComponent as OrangeCircle } from "./assets/images/orange-circle.svg";
 import { ReactComponent as GreenCircle } from "./assets/images/green-circle.svg";
-// import { ReactComponent as KangalCircledBlue } from "./assets/images/kangal-in-circle.svg";
-// import { ReactComponent as SteakCircleRed } from "./assets/images/steak-in-circle.svg";
-// import { ReactComponent as DollarCircle } from "./assets/images/dollar-in-circle.svg";
 
 function App() {
-  //const walletStore = useWalletStore();
+  const walletStore = useWalletStore();
+  const stakeStore = useStakeStore();
 
-  // useEffect(() => {
-  //   walletStore.connect();
-  // }, []);
+  useEffect(() => {
+    if (walletStore.provider && walletStore.address) {
+      stakeStore.fetchInfo(walletStore.provider, walletStore.address);
+    }
 
-  // useEffect(() => {
-  //   async function setAddress() {
-  //     let address = await web3Modal.provider?.getSigner().getAddress();
-  //     if (address) {
-  //       selectedWalletSet(address);
-  //     } else {
-  //       selectedWalletSet("");
-  //     }
-  //   }
-  //   setAddress();
-  // }, [web3Modal.provider]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [walletStore.provider, walletStore.address]);
 
-  // useEffect(() => {
-  //   async function getBalanceOfConnectedWallet() {
-  //     const provider = web3Modal.provider;
-  //     if (provider == null) return;
-  //     if (selectedWallet === "") return;
+  const approve = () => {
+    console.log(stakeStore.poolInfo.hasAllowance);
+    // if (walletStore.provider && walletStore.address) {
+    //   stakeStore.approve(walletStore.provider);
+    // }
+  };
 
-  //     const mainToken = MainToken__factory.connect(mainTokenAddress, provider);
-  //     let balance = "";
-  //     try {
-  //       balance = ethers.utils.formatUnits(
-  //         await mainToken.balanceOf(selectedWallet)
-  //       );
-  //     } catch (error) {
-  //       console.log(error);
-  //     }
-
-  //     mainTokenBalanceSet(balance);
-  //   }
-  //   getBalanceOfConnectedWallet();
-  // }, [web3Modal.provider, selectedWallet]);
+  const deposit = async () => {
+    if (walletStore.provider && walletStore.address) {
+      stakeStore.deposit(walletStore.provider);
+    }
+  };
 
   return (
     <div className="antialiased min-h-screen bg-mainbg">
@@ -73,38 +55,89 @@ function App() {
 
       {/* Content */}
       <div className="container mx-auto px-4">
-        <div className="mt-20">
-          <h1 className="text-body text-4xl font-bold">Stake</h1>
-        </div>
         <div className="flex space-x-8 mt-6">
-          <PoolInfoBox
-            title="TOTAL STAKED KANGAL"
-            amount={123123123}
+          <InfoBox
+            title="WALLET KANGAL BALANCE"
+            amount={ethers.utils.commify(
+              stakeStore.kangalInfo.userBalance
+                ? stakeStore.kangalInfo.userBalance
+                : ""
+            )}
             iconBackground={<BlueCircle />}
             iconForeground={<Logo />}
           />
-          <PoolInfoBox
-            title="TOTAL STAKED KANGAL"
-            amount={123123123}
+          <InfoBox
+            title="WALLET $TEAK BALANCE"
+            amount={ethers.utils.commify(
+              stakeStore.steakInfo.userBalance
+                ? stakeStore.steakInfo.userBalance
+                : ""
+            )}
             iconBackground={<OrangeCircle />}
             iconForeground={<SteakLogo />}
           />
-          <PoolInfoBox
-            title="TOTAL STAKED KANGAL"
-            amount={123123123}
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4">
+        <div className="mt-20">
+          <h1 className="text-body text-4xl font-bold">Stake for $TEAK</h1>
+        </div>
+        <div className="flex space-x-8 mt-6">
+          <InfoBox
+            title="TOTAL KANGAL STAKED"
+            amount={ethers.utils.commify(
+              stakeStore.poolInfo.totalStakedBalance
+                ? stakeStore.poolInfo.totalStakedBalance
+                : ""
+            )}
+            iconBackground={<BlueCircle />}
+            iconForeground={<Logo />}
+          />
+          <InfoBox
+            title="TOTAL $TEAK CLAIMED"
+            amount={ethers.utils.commify(
+              stakeStore.steakInfo.totalSupply
+                ? stakeStore.steakInfo.totalSupply
+                : ""
+            )}
+            iconBackground={<OrangeCircle />}
+            iconForeground={<SteakLogo />}
+          />
+          <InfoBox
+            title="TOTAL VALUE LOCKED"
+            amount={null}
             iconBackground={<GreenCircle />}
             iconForeground={<DollarIcon />}
           />
-          {/* <PoolInfoBox
-            title="TOTAL EARNED $TEAK"
-            amount={123123123}
-            icon={<SteakCircleRed />}
-          />
-          <PoolInfoBox
-            title="TOTAL LOCKED VALUE"
-            amount={123123123}
-            icon={<DollarCircle />}
-          /> */}
+        </div>
+
+        <div className="flex mt-5 bg-white shadow-k overflow-hidden rounded-lg">
+          <div className="md:w-1/2">
+            <StakeAndEarnInfo />
+          </div>
+          <div className="md:w-1/2 p-4">
+            <div className="flex-col">
+              <div className="mb-4">
+                <p className="text-xs font-bold text-gray-600">DEPOSIT</p>
+                <p>0 KANGAL</p>
+              </div>
+              <div>
+                <p className="text-xs font-bold text-gray-600">EARNINGS</p>
+                <p>0 $TEAK</p>
+              </div>
+              <button className="mt-4 relative">
+                <div className="absolute w-full h-full bg-orange rounded-md opacity-10" />
+                <p className="text-orange px-5 py-1 font-semibold tracking-wider">
+                  CLAIM
+                </p>
+              </button>
+            </div>
+          </div>
+          {/* <button onClick={approve} className="mr-4">
+            Approve
+          </button>
+          <button onClick={deposit}>Deposit</button> */}
         </div>
       </div>
     </div>
