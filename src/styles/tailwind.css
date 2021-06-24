@@ -44,6 +44,10 @@
   }
 
   .shadow-k {
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.05);
+    @apply shadow-sm;
+  }
+
+  .active-tab {
+    @apply underline font-bold;
   }
 }

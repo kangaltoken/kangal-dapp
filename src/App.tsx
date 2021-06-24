@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import useWalletStore from "./store/walletStore";
 import useStakeStore from "./store/stakeStore";
-import { ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
 
 import ConnectButton from "./components/ConnectButton";
 import InfoBox from "./components/InfoBox";
@@ -14,10 +14,14 @@ import { ReactComponent as DollarIcon } from "./assets/images/dollar-icon.svg";
 import { ReactComponent as BlueCircle } from "./assets/images/blue-circle.svg";
 import { ReactComponent as OrangeCircle } from "./assets/images/orange-circle.svg";
 import { ReactComponent as GreenCircle } from "./assets/images/green-circle.svg";
+import NotificationPopup from "./components/NotificationPopup";
 
 function App() {
   const walletStore = useWalletStore();
   const stakeStore = useStakeStore();
+
+  const [depositTabActive, setDepositTabActive] = useState(true);
+  const [depositAmount, setDepositAmount] = useState("");
 
   useEffect(() => {
     if (walletStore.provider && walletStore.address) {
@@ -28,15 +32,18 @@ function App() {
   }, [walletStore.provider, walletStore.address]);
 
   const approve = () => {
-    console.log(stakeStore.poolInfo.hasAllowance);
-    // if (walletStore.provider && walletStore.address) {
-    //   stakeStore.approve(walletStore.provider);
-    // }
+    if (walletStore.provider && walletStore.address) {
+      stakeStore.approve(walletStore.provider);
+    }
   };
 
-  const deposit = async () => {
+  const deposit = async (amount: string) => {
     if (walletStore.provider && walletStore.address) {
-      stakeStore.deposit(walletStore.provider);
+      console.log(ethers.utils.parseUnits(amount).toString());
+      console.log(
+        ethers.utils.formatUnits(ethers.utils.parseUnits(amount)).toString()
+      );
+      //stakeStore.deposit(amount, walletStore.provider);
     }
   };
 
@@ -53,26 +60,30 @@ function App() {
         </div>
       </div>
 
+      {stakeStore.pendingTx && (
+        <div className="sticky top-4 z-10 h-0">
+          <NotificationPopup
+            txType={stakeStore.pendingTx.type}
+            txHash={stakeStore.pendingTx.hash}
+          />
+        </div>
+      )}
+
       {/* Content */}
       <div className="container mx-auto px-4">
+        <div className="mt-10">
+          <h1 className="text-body text-4xl font-bold">Wallet</h1>
+        </div>
         <div className="flex space-x-8 mt-6">
           <InfoBox
-            title="WALLET KANGAL BALANCE"
-            amount={ethers.utils.commify(
-              stakeStore.kangalInfo.userBalance
-                ? stakeStore.kangalInfo.userBalance
-                : ""
-            )}
+            title="KANGAL BALANCE"
+            amount={formatUnits(stakeStore.kangalInfo.userBalance)}
             iconBackground={<BlueCircle />}
             iconForeground={<Logo />}
           />
           <InfoBox
-            title="WALLET $TEAK BALANCE"
-            amount={ethers.utils.commify(
-              stakeStore.steakInfo.userBalance
-                ? stakeStore.steakInfo.userBalance
-                : ""
-            )}
+            title="$TEAK BALANCE"
+            amount={formatUnits(stakeStore.steakInfo.userBalance)}
             iconBackground={<OrangeCircle />}
             iconForeground={<SteakLogo />}
           />
@@ -86,21 +97,13 @@ function App() {
         <div className="flex space-x-8 mt-6">
           <InfoBox
             title="TOTAL KANGAL STAKED"
-            amount={ethers.utils.commify(
-              stakeStore.poolInfo.totalStakedBalance
-                ? stakeStore.poolInfo.totalStakedBalance
-                : ""
-            )}
+            amount={formatUnits(stakeStore.poolInfo.totalStakedBalance)}
             iconBackground={<BlueCircle />}
             iconForeground={<Logo />}
           />
           <InfoBox
             title="TOTAL $TEAK CLAIMED"
-            amount={ethers.utils.commify(
-              stakeStore.steakInfo.totalSupply
-                ? stakeStore.steakInfo.totalSupply
-                : ""
-            )}
+            amount={formatUnits(stakeStore.steakInfo.totalSupply)}
             iconBackground={<OrangeCircle />}
             iconForeground={<SteakLogo />}
           />
@@ -116,15 +119,20 @@ function App() {
           <div className="md:w-1/2">
             <StakeAndEarnInfo />
           </div>
-          <div className="md:w-1/2 p-4">
+
+          <div className="md:w-1/2 p-4 flex">
             <div className="flex-col">
               <div className="mb-4">
-                <p className="text-xs font-bold text-gray-600">DEPOSIT</p>
-                <p>0 KANGAL</p>
+                <p className="text-xs font-bold text-gray-600">
+                  CURRENT DEPOSIT
+                </p>
+                <p>{formatUnits(stakeStore.poolInfo.stakedBalance)} KANGAL</p>
               </div>
               <div>
-                <p className="text-xs font-bold text-gray-600">EARNINGS</p>
-                <p>0 $TEAK</p>
+                <p className="text-xs font-bold text-gray-600">
+                  PENDING EARNINGS
+                </p>
+                <p>{formatUnits(stakeStore.poolInfo.pendingEarnings)} $TEAK</p>
               </div>
               <button className="mt-4 relative">
                 <div className="absolute w-full h-full bg-orange rounded-md opacity-10" />
@@ -133,15 +141,116 @@ function App() {
                 </p>
               </button>
             </div>
+            <div className="flex-1 -mt-1">
+              <div className="text-center">
+                <button
+                  onClick={() => setDepositTabActive(true)}
+                  className={"mr-4 " + (depositTabActive ? "active-tab" : "")}
+                >
+                  Deposit
+                </button>
+                <button
+                  onClick={() => setDepositTabActive(false)}
+                  className={"" + (!depositTabActive ? "active-tab" : "")}
+                >
+                  Withdraw
+                </button>
+              </div>
+
+              {depositTabActive ? (
+                <div>
+                  <div className="flex justify-center">
+                    <div className="mt-5 w-1/2">
+                      <input
+                        className="p-2 w-full"
+                        type="text"
+                        placeholder="0"
+                        value={depositAmount}
+                        onChange={(e) => {
+                          const regexp = /^-?\d*\.?\d*$/;
+                          const value = e.target.value;
+                          if (regexp.test(value) || "" === value) {
+                            setDepositAmount(e.target.value);
+                          }
+                        }}
+                      />
+                      <div className="h-px bg-body" />
+                    </div>
+                    <button
+                      className="mt-5 ml-2"
+                      onClick={() => {
+                        if (stakeStore.kangalInfo.userBalance) {
+                          const amount = ethers.utils
+                            .formatUnits(stakeStore.kangalInfo.userBalance)
+                            .replace(",", ".");
+                          setDepositAmount(amount);
+                        }
+                      }}
+                    >
+                      MAX
+                    </button>
+                  </div>
+                  <button
+                    className="flex mx-auto mt-6 relative"
+                    onClick={() => {
+                      if (stakeStore.poolInfo.hasAllowance !== null) {
+                        stakeStore.poolInfo.hasAllowance
+                          ? deposit(depositAmount)
+                          : approve();
+                      }
+                    }}
+                  >
+                    <div className="absolute w-full h-full bg-orange rounded-md opacity-10" />
+                    <p className="text-orange px-5 py-1 font-semibold tracking-wider">
+                      {stakeStore.poolInfo.hasAllowance == null
+                        ? "..."
+                        : stakeStore.poolInfo.hasAllowance
+                        ? "DEPOSIT"
+                        : "APPROVE"}
+                    </p>
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <div className="mt-2 mx-auto max-w-xs">
+                    <p className="text-xs">
+                      - You will withdraw all of your deposit
+                    </p>
+                    <p className="text-xs">
+                      - You will be able to claim rewards if you've staked
+                      longer than the minimum stake time (2 days) since first
+                      deposit
+                    </p>
+                    <p className="text-xs">
+                      - There is a 0.1% KANGAL withdrawal fee
+                    </p>
+                  </div>
+                  <button
+                    className="flex mx-auto mt-6 relative"
+                    onClick={() => deposit(depositAmount)}
+                  >
+                    <div className="absolute w-full h-full bg-orange rounded-md opacity-10" />
+                    <p className="text-orange px-5 py-1 font-semibold tracking-wider">
+                      WITHDRAW
+                    </p>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-          {/* <button onClick={approve} className="mr-4">
-            Approve
-          </button>
-          <button onClick={deposit}>Deposit</button> */}
         </div>
       </div>
     </div>
   );
+}
+
+function formatUnits(units: BigNumber | null): string {
+  if (units) {
+    const remainder = units.mod(1e15);
+    const formatted = ethers.utils.formatUnits(units.sub(remainder));
+    return ethers.utils.commify(formatted);
+  }
+  return "...";
 }
 
 export default App;
