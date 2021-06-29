@@ -5,7 +5,9 @@ import immerMiddleware from "./immerMiddleware";
 import { ERC20__factory } from "../assets/typechain/factories/ERC20__factory";
 import { StakingContract__factory } from "../assets/typechain/factories/StakingContract__factory";
 
-type Tx = {
+import ContractAddresses from "../constants/contracts";
+
+export type Tx = {
   type: string;
   hash: string;
 };
@@ -26,7 +28,7 @@ type PoolInfo = {
   pendingEarnings: BigNumber | null;
 };
 
-type StakeStore = {
+export type StakeStore = {
   pendingTx: Tx | null;
   kangalInfo: TokenInfo;
   steakInfo: TokenInfo;
@@ -46,17 +48,17 @@ const useStakeStore = create<StakeStore>(
   immerMiddleware((set, get) => ({
     pendingTx: null,
     kangalInfo: {
-      address: "0xa9a96A85A6253fBA6c79211B84370D3601142653",
+      address: ContractAddresses.kangal,
       userBalance: null,
       totalSupply: null,
     },
     steakInfo: {
-      address: "0xe6A8d67C25699B6d66A4d7b530e0424a002EB10D",
+      address: ContractAddresses.teak,
       userBalance: null,
       totalSupply: null,
     },
     poolInfo: {
-      address: "0xa76e291EEc2e24F1EccA2217095325091235fDbf",
+      address: ContractAddresses.staking,
       hasAllowance: null,
       firstDepositTimestamp: null,
       timeLimitPassed: null,
@@ -71,7 +73,6 @@ const useStakeStore = create<StakeStore>(
           provider
         );
         const kBalance = await kangal.balanceOf(address);
-        const kBalanceFormatted = kBalance;
         const kAllowance = await kangal.allowance(
           address,
           get().poolInfo.address
@@ -101,7 +102,7 @@ const useStakeStore = create<StakeStore>(
           now - firstDepositTimestamp.toNumber() > timeLimit.toNumber();
 
         set((state) => {
-          state.kangalInfo.userBalance = kBalanceFormatted;
+          state.kangalInfo.userBalance = kBalance;
 
           state.steakInfo.userBalance = sBalance;
           state.steakInfo.totalSupply = sTotalSupply;
@@ -136,11 +137,7 @@ const useStakeStore = create<StakeStore>(
           state.pendingTx = { type: "APPROVAL", hash: transaction.hash };
         });
 
-        console.log(transaction);
-
-        const receipt = await transaction.wait();
-
-        console.log(receipt);
+        await transaction.wait();
 
         set((state) => {
           state.pendingTx = null;
@@ -158,7 +155,20 @@ const useStakeStore = create<StakeStore>(
         get().poolInfo.address,
         provider.getSigner()
       );
-      await stakingContract.deposit(ethers.utils.parseUnits("500000"));
+      let parsedAmount = ethers.utils.parseUnits(amount);
+      const transaction = await stakingContract.deposit(parsedAmount);
+
+      set((state) => {
+        state.pendingTx = { type: "APPROVAL", hash: transaction.hash };
+      });
+
+      const receipt = await transaction.wait();
+
+      set((state) => {
+        state.pendingTx = null;
+      });
+
+      get().fetchInfo(provider, receipt.from);
     },
   }))
 );

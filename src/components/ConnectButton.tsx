@@ -34,7 +34,7 @@ export default function ConnectButton() {
         </button>
         <p
           className={
-            "text-white my-auto " +
+            "text-white text-sm max-w-xs text-center " +
             (walletStore.networkWarning ? "block" : "hidden")
           }
         >

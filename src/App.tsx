@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import useWalletStore from "./store/walletStore";
 import useStakeStore from "./store/stakeStore";
+import { StakeStore } from "./store/stakeStore";
 import { BigNumber, ethers } from "ethers";
+import { PlayState, Tween } from "react-gsap";
 
 import ConnectButton from "./components/ConnectButton";
 import InfoBox from "./components/InfoBox";
 import StakeAndEarnInfo from "./components/StakeAndEarnInfo";
+import NotificationPopup from "./components/NotificationPopup";
 
 import { ReactComponent as Logo } from "./assets/images/kangal-logo.svg";
 import { ReactComponent as SteakLogo } from "./assets/images/steak-logo.svg";
@@ -14,7 +17,6 @@ import { ReactComponent as DollarIcon } from "./assets/images/dollar-icon.svg";
 import { ReactComponent as BlueCircle } from "./assets/images/blue-circle.svg";
 import { ReactComponent as OrangeCircle } from "./assets/images/orange-circle.svg";
 import { ReactComponent as GreenCircle } from "./assets/images/green-circle.svg";
-import NotificationPopup from "./components/NotificationPopup";
 
 function App() {
   const walletStore = useWalletStore();
@@ -22,6 +24,13 @@ function App() {
 
   const [depositTabActive, setDepositTabActive] = useState(true);
   const [depositAmount, setDepositAmount] = useState("");
+  const [playState, setPlayState] = useState(PlayState.pause);
+
+  useEffect(() => {
+    stakeStore.pendingTx
+      ? setPlayState(PlayState.play)
+      : setPlayState(PlayState.reverse);
+  }, [stakeStore.pendingTx]);
 
   useEffect(() => {
     if (walletStore.provider && walletStore.address) {
@@ -39,11 +48,7 @@ function App() {
 
   const deposit = async (amount: string) => {
     if (walletStore.provider && walletStore.address) {
-      console.log(ethers.utils.parseUnits(amount).toString());
-      console.log(
-        ethers.utils.formatUnits(ethers.utils.parseUnits(amount)).toString()
-      );
-      //stakeStore.deposit(amount, walletStore.provider);
+      stakeStore.deposit(amount, walletStore.provider);
     }
   };
 
@@ -60,14 +65,18 @@ function App() {
         </div>
       </div>
 
-      {stakeStore.pendingTx && (
-        <div className="sticky top-4 z-10 h-0">
-          <NotificationPopup
-            txType={stakeStore.pendingTx.type}
-            txHash={stakeStore.pendingTx.hash}
-          />
-        </div>
-      )}
+      <div className="sticky top-4 z-10 h-0">
+        <Tween
+          to={{ right: "0" }}
+          duration={0.4}
+          ease="back.out(1)"
+          playState={playState}
+        >
+          <div className="relative -right-96">
+            <NotificationPopup transaction={stakeStore.pendingTx} />
+          </div>
+        </Tween>
+      </div>
 
       {/* Content */}
       <div className="container mx-auto px-4">
@@ -159,40 +168,48 @@ function App() {
 
               {depositTabActive ? (
                 <div>
-                  <div className="flex justify-center">
-                    <div className="mt-5 w-1/2">
-                      <input
-                        className="p-2 w-full"
-                        type="text"
-                        placeholder="0"
-                        value={depositAmount}
-                        onChange={(e) => {
-                          const regexp = /^-?\d*\.?\d*$/;
-                          const value = e.target.value;
-                          if (regexp.test(value) || "" === value) {
-                            setDepositAmount(e.target.value);
+                  <div className="flex-col w-1/2 mx-auto">
+                    <div className="flex">
+                      <div className="mt-5 flex-1">
+                        <input
+                          className="p-2 w-full"
+                          type="text"
+                          placeholder="0"
+                          value={depositAmount}
+                          onChange={(e) => {
+                            const regexp = /^-?\d*\.?\d*$/;
+                            const value = e.target.value;
+                            if (regexp.test(value) || "" === value) {
+                              setDepositAmount(e.target.value);
+                            }
+                          }}
+                        />
+                        <div className="h-px bg-body" />
+                      </div>
+                      <button
+                        className="mt-5 ml-2"
+                        onClick={() => {
+                          if (stakeStore.kangalInfo.userBalance) {
+                            const amount = ethers.utils
+                              .formatUnits(stakeStore.kangalInfo.userBalance)
+                              .replace(",", ".");
+                            setDepositAmount(amount);
                           }
                         }}
-                      />
-                      <div className="h-px bg-body" />
+                      >
+                        MAX
+                      </button>
                     </div>
-                    <button
-                      className="mt-5 ml-2"
-                      onClick={() => {
-                        if (stakeStore.kangalInfo.userBalance) {
-                          const amount = ethers.utils
-                            .formatUnits(stakeStore.kangalInfo.userBalance)
-                            .replace(",", ".");
-                          setDepositAmount(amount);
-                        }
-                      }}
-                    >
-                      MAX
-                    </button>
+                    <p className="mt-2 text-xs">
+                      Minimum deposit amount is 500K
+                    </p>
                   </div>
                   <button
                     className="flex mx-auto mt-6 relative"
                     onClick={() => {
+                      if (stakeStore.kangalInfo?.userBalance?.eq(0)) {
+                        return;
+                      }
                       if (stakeStore.poolInfo.hasAllowance !== null) {
                         stakeStore.poolInfo.hasAllowance
                           ? deposit(depositAmount)
@@ -202,11 +219,7 @@ function App() {
                   >
                     <div className="absolute w-full h-full bg-orange rounded-md opacity-10" />
                     <p className="text-orange px-5 py-1 font-semibold tracking-wider">
-                      {stakeStore.poolInfo.hasAllowance == null
-                        ? "..."
-                        : stakeStore.poolInfo.hasAllowance
-                        ? "DEPOSIT"
-                        : "APPROVE"}
+                      {makeDepositButtonText(stakeStore)}
                     </p>
                   </button>
                 </div>
@@ -242,6 +255,17 @@ function App() {
       </div>
     </div>
   );
+}
+
+function makeDepositButtonText(stakeInfo: StakeStore): string {
+  if (stakeInfo.kangalInfo.userBalance?.eq(0)) {
+    return "NO BALANCE";
+  }
+  return stakeInfo.poolInfo.hasAllowance == null
+    ? "..."
+    : stakeInfo.poolInfo.hasAllowance
+    ? "DEPOSIT"
+    : "APPROVE";
 }
 
 function formatUnits(units: BigNumber | null): string {

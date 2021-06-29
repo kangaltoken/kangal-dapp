@@ -1,6 +1,5 @@
 import { ethers } from "ethers";
 import Web3Modal from "web3modal";
-import WalletConnectProvider from "@walletconnect/web3-provider";
 import create from "zustand";
 
 type Network = {
@@ -22,7 +21,7 @@ type WalletStore = {
 const useWalletStore = create<WalletStore>((set, get) => ({
   hasMetamask: false,
   hasPendingConnect: true,
-  requiredNetwork: { name: "Binance Smart Chain", chainId: 4 }, // TODO: update id to 56
+  requiredNetwork: { name: "Binance Smart Chain", chainId: 56 },
   provider: null,
   address: null,
   networkWarning: null,
@@ -30,26 +29,14 @@ const useWalletStore = create<WalletStore>((set, get) => ({
     try {
       const web3Provider = await web3Modal.connect();
       const provider = new ethers.providers.Web3Provider(web3Provider);
-      const chainId = (await provider.getNetwork()).chainId;
       const address = await provider.getSigner().getAddress();
 
-      if (!get().hasMetamask && get().requiredNetwork.chainId !== chainId) {
-        set({
-          provider: null,
-          address: null,
-          hasPendingConnect: false,
-          networkWarning: `Please switch network to ${
-            get().requiredNetwork.name
-          } and reset WalletConnect session`,
-        });
-      } else {
-        set({
-          provider: provider,
-          address: address,
-          hasPendingConnect: false,
-          networkWarning: null,
-        });
-      }
+      set({
+        provider: provider,
+        address: address,
+        hasPendingConnect: false,
+        networkWarning: null,
+      });
     } catch (error) {
       console.log(error);
       set({ hasPendingConnect: false });
@@ -61,14 +48,7 @@ const useWalletStore = create<WalletStore>((set, get) => ({
   },
 }));
 
-const providerOptions = {
-  walletconnect: {
-    package: WalletConnectProvider,
-    options: {
-      infuraId: "9f0c48b0a30441c8b0f736595f426577",
-    },
-  },
-};
+const providerOptions = {};
 const web3Modal = new Web3Modal({
   cacheProvider: true,
   providerOptions,
@@ -102,9 +82,12 @@ if (window.ethereum) {
     }
   });
 } else {
+  web3Modal.clearCachedProvider();
   useWalletStore.setState({
     hasMetamask: false,
     hasPendingConnect: false,
+    networkWarning:
+      "Use Metamask in-app browser or Metamask extenstion to connect your wallet",
   });
 }
 
