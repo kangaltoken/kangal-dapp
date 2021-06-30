@@ -188,7 +188,10 @@ function formatUnits(units: BigNumber | null): string {
 
 function formatTLV(number: number | null): string {
   if (number) {
-    return number.toFixed(3);
+    return number
+      .toFixed(3)
+      .toString()
+      .replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",");
   }
   return "...";
 }
