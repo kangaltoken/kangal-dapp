@@ -47,6 +47,7 @@ module.exports = {
       "./src/**/*.jsx",
       "./src/**/*.ts",
       "./src/**/*.tsx",
+      "./src/**/*.svg",
       "./public/index.html",
     ],
     // Options passed to PurgeCSS

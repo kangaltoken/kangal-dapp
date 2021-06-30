@@ -15,7 +15,7 @@ export default function ConnectButton() {
 
       <div
         className={
-          "transition ease-in duration-150 delay-75" +
+          "transition ease-in duration-150 delay-75 " +
           (walletStore.hasPendingConnect
             ? "hidden opacity-0"
             : "block opacity-100")
