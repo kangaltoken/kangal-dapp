@@ -7,6 +7,13 @@ import { StakingContract__factory } from "../assets/typechain/factories/StakingC
 
 import ContractAddresses from "../constants/contracts";
 
+const pancakePairAbi = [
+  "function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast)",
+];
+
+const kangalBnbPairAddress = "0x4E3f77687dd3C61F4e1B919aa4Ded90AE1766894";
+const wbnbBusdPairAddress = "0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16";
+
 export type Tx = {
   type: string;
   hash: string;
@@ -16,6 +23,7 @@ type TokenInfo = {
   address: string;
   userBalance: BigNumber | null;
   totalSupply: BigNumber | null;
+  priceUsd: BigNumber | null;
 };
 
 type PoolInfo = {
@@ -26,6 +34,7 @@ type PoolInfo = {
   totalStakedBalance: BigNumber | null;
   stakedBalance: BigNumber | null;
   pendingEarnings: BigNumber | null;
+  totalLockedValue: number | null;
 };
 
 export type StakeStore = {
@@ -42,6 +51,8 @@ export type StakeStore = {
     amount: string,
     provider: ethers.providers.Web3Provider
   ) => Promise<void>;
+  claim: (provider: ethers.providers.Web3Provider) => Promise<void>;
+  withdraw: (provider: ethers.providers.Web3Provider) => Promise<void>;
 };
 
 const useStakeStore = create<StakeStore>(
@@ -51,11 +62,13 @@ const useStakeStore = create<StakeStore>(
       address: ContractAddresses.kangal,
       userBalance: null,
       totalSupply: null,
+      priceUsd: null,
     },
     steakInfo: {
       address: ContractAddresses.teak,
       userBalance: null,
       totalSupply: null,
+      priceUsd: null,
     },
     poolInfo: {
       address: ContractAddresses.staking,
@@ -65,6 +78,7 @@ const useStakeStore = create<StakeStore>(
       totalStakedBalance: null,
       stakedBalance: null,
       pendingEarnings: null,
+      totalLockedValue: null,
     },
     fetchInfo: async (provider, address) => {
       try {
@@ -101,15 +115,44 @@ const useStakeStore = create<StakeStore>(
         const timeLimitPassed =
           now - firstDepositTimestamp.toNumber() > timeLimit.toNumber();
 
+        const kangalPair = new ethers.Contract(
+          kangalBnbPairAddress,
+          pancakePairAbi,
+          provider
+        );
+        const wbnbPair = new ethers.Contract(
+          wbnbBusdPairAddress,
+          pancakePairAbi,
+          provider
+        );
+        const kangalPairReserves = await kangalPair.getReserves();
+        const wbnbPairReserves = await wbnbPair.getReserves();
+
+        const kangalPairKangal = Number(
+          ethers.utils.formatUnits(kangalPairReserves[0])
+        );
+        const kangalPairBnb = Number(
+          ethers.utils.formatUnits(kangalPairReserves[1])
+        );
+
+        const wbnbPairWbnb = Number(
+          ethers.utils.formatUnits(wbnbPairReserves[0])
+        );
+        const wbnbPairBusd = Number(
+          ethers.utils.formatUnits(wbnbPairReserves[1])
+        );
+        const bnbPrice = wbnbPairBusd / wbnbPairWbnb;
+        const kangalPrice = (kangalPairKangal / kangalPairBnb) * bnbPrice;
+        const totalLockedValue =
+          kangalPrice * Number(ethers.utils.formatUnits(totalStakedBalance));
+
         set((state) => {
           state.kangalInfo.userBalance = kBalance;
 
           state.steakInfo.userBalance = sBalance;
           state.steakInfo.totalSupply = sTotalSupply;
 
-          state.poolInfo.hasAllowance = kAllowance.eq(
-            ethers.utils.parseUnits("0")
-          )
+          state.poolInfo.hasAllowance = kAllowance.eq(0)
             ? false
             : kAllowance.gte(kBalance);
           state.poolInfo.firstDepositTimestamp = firstDepositTimestamp;
@@ -117,6 +160,7 @@ const useStakeStore = create<StakeStore>(
           state.poolInfo.totalStakedBalance = totalStakedBalance;
           state.poolInfo.stakedBalance = stakedBalance;
           state.poolInfo.pendingEarnings = pendingEarnings;
+          state.poolInfo.totalLockedValue = totalLockedValue;
         });
       } catch (error) {
         console.log(error);
@@ -159,7 +203,47 @@ const useStakeStore = create<StakeStore>(
       const transaction = await stakingContract.deposit(parsedAmount);
 
       set((state) => {
-        state.pendingTx = { type: "APPROVAL", hash: transaction.hash };
+        state.pendingTx = { type: "DEPOSIT", hash: transaction.hash };
+      });
+
+      const receipt = await transaction.wait();
+
+      set((state) => {
+        state.pendingTx = null;
+      });
+
+      get().fetchInfo(provider, receipt.from);
+    },
+    claim: async (provider) => {
+      const stakingContract = StakingContract__factory.connect(
+        get().poolInfo.address,
+        provider.getSigner()
+      );
+
+      const transaction = await stakingContract.claimRewards();
+
+      set((state) => {
+        state.pendingTx = { type: "CLAIM REWARDS", hash: transaction.hash };
+      });
+
+      const receipt = await transaction.wait();
+
+      set((state) => {
+        state.pendingTx = null;
+      });
+
+      get().fetchInfo(provider, receipt.from);
+    },
+    withdraw: async (provider) => {
+      const stakingContract = StakingContract__factory.connect(
+        get().poolInfo.address,
+        provider.getSigner()
+      );
+
+      const transaction = await stakingContract.withdraw();
+
+      set((state) => {
+        state.pendingTx = { type: "WITHDRAW", hash: transaction.hash };
       });
 
       const receipt = await transaction.wait();

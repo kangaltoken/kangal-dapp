@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
+import { BigNumber, ethers } from "ethers";
+import { PlayState } from "react-gsap";
+
 import useWalletStore from "./store/walletStore";
 import useStakeStore from "./store/stakeStore";
-import { StakeStore } from "./store/stakeStore";
-import { BigNumber, ethers } from "ethers";
-import { PlayState, Tween } from "react-gsap";
 
 import ConnectButton from "./components/ConnectButton";
 import InfoBox from "./components/InfoBox";
 import StakeAndEarnInfo from "./components/StakeAndEarnInfo";
 import NotificationPopup from "./components/NotificationPopup";
+import DepositTab from "./components/DepositTab";
+import WithdrawTab from "./components/WithdrawTab";
 
 import { ReactComponent as Logo } from "./assets/images/kangal-logo.svg";
 import { ReactComponent as SteakLogo } from "./assets/images/steak-logo.svg";
@@ -23,7 +25,6 @@ function App() {
   const stakeStore = useStakeStore();
 
   const [depositTabActive, setDepositTabActive] = useState(true);
-  const [depositAmount, setDepositAmount] = useState("");
   const [playState, setPlayState] = useState(PlayState.pause);
 
   useEffect(() => {
@@ -40,22 +41,21 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [walletStore.provider, walletStore.address]);
 
-  const approve = () => {
-    if (walletStore.provider && walletStore.address) {
-      stakeStore.approve(walletStore.provider);
-    }
-  };
-
-  const deposit = async (amount: string) => {
-    if (walletStore.provider && walletStore.address) {
-      stakeStore.deposit(amount, walletStore.provider);
+  const claim = () => {
+    if (walletStore.provider) {
+      if (
+        !stakeStore.poolInfo.pendingEarnings?.eq(0) &&
+        stakeStore.poolInfo.timeLimitPassed
+      ) {
+        stakeStore.claim(walletStore.provider);
+      }
     }
   };
 
   return (
-    <div className="antialiased min-h-screen bg-mainbg">
+    <div className="antialiased min-h-screen bg-mainbg pb-10">
       {/* Nav */}
-      <div className="flex h-20 px-10 items-center bg-darkBlue">
+      <div className="flex h-20 px-4 sm:px-10 items-center bg-darkBlue">
         <div className="flex h-8">
           <Logo className="w-8 h-8" />
           <Logotype className="ml-2 mt-2" />
@@ -65,17 +65,18 @@ function App() {
         </div>
       </div>
 
-      <div className="sticky top-4 z-10 h-0">
-        <Tween
-          to={{ right: "0" }}
-          duration={0.4}
-          ease="back.out(1)"
+      <div className="sticky top-0 z-10">
+        <NotificationPopup
           playState={playState}
-        >
-          <div className="relative -right-96">
-            <NotificationPopup transaction={stakeStore.pendingTx} />
-          </div>
-        </Tween>
+          transaction={stakeStore.pendingTx}
+        />
+      </div>
+
+      <div className="mt-4 px-4 flex">
+        <div className="mx-auto bg-white shadow-sm px-3 py-2 rounded">
+          Using Smart Contracts, Tokens, and Crypto is always a risk. DYOR
+          before investing.
+        </div>
       </div>
 
       {/* Content */}
@@ -83,7 +84,7 @@ function App() {
         <div className="mt-10">
           <h1 className="text-body text-4xl font-bold">Wallet</h1>
         </div>
-        <div className="flex space-x-8 mt-6">
+        <div className="flex-col space-y-4 sm:flex sm:flex-row sm:space-y-0 sm:space-x-8 mt-6">
           <InfoBox
             title="KANGAL BALANCE"
             amount={formatUnits(stakeStore.kangalInfo.userBalance)}
@@ -100,10 +101,10 @@ function App() {
       </div>
 
       <div className="container mx-auto px-4">
-        <div className="mt-20">
+        <div className="mt-10 sm:mt-20">
           <h1 className="text-body text-4xl font-bold">Stake for $TEAK</h1>
         </div>
-        <div className="flex space-x-8 mt-6">
+        <div className="flex-col space-y-4 sm:flex sm:flex-row sm:space-y-0 sm:space-x-8 mt-6">
           <InfoBox
             title="TOTAL KANGAL STAKED"
             amount={formatUnits(stakeStore.poolInfo.totalStakedBalance)}
@@ -111,26 +112,26 @@ function App() {
             iconForeground={<Logo />}
           />
           <InfoBox
+            title="TOTAL VALUE LOCKED"
+            amount={formatTLV(stakeStore.poolInfo.totalLockedValue)}
+            iconBackground={<GreenCircle />}
+            iconForeground={<DollarIcon />}
+          />
+          <InfoBox
             title="TOTAL $TEAK CLAIMED"
             amount={formatUnits(stakeStore.steakInfo.totalSupply)}
             iconBackground={<OrangeCircle />}
             iconForeground={<SteakLogo />}
           />
-          <InfoBox
-            title="TOTAL VALUE LOCKED"
-            amount={null}
-            iconBackground={<GreenCircle />}
-            iconForeground={<DollarIcon />}
-          />
         </div>
 
-        <div className="flex mt-5 bg-white shadow-k overflow-hidden rounded-lg">
-          <div className="md:w-1/2">
+        <div className="flex flex-col md:flex-row mt-5 bg-white shadow-k overflow-hidden rounded-lg">
+          <div className="w-full md:w-1/2">
             <StakeAndEarnInfo />
           </div>
 
-          <div className="md:w-1/2 p-4 flex">
-            <div className="flex-col">
+          <div className="flex flex-col sm:flex-row p-4 md:w-1/2">
+            <div className="flex-col order-last mt-6 text-center sm:mt-0 sm:order-first sm:text-left">
               <div className="mb-4">
                 <p className="text-xs font-bold text-gray-600">
                   CURRENT DEPOSIT
@@ -143,14 +144,14 @@ function App() {
                 </p>
                 <p>{formatUnits(stakeStore.poolInfo.pendingEarnings)} $TEAK</p>
               </div>
-              <button className="mt-4 relative">
+              <button onClick={claim} className="mt-4 relative">
                 <div className="absolute w-full h-full bg-orange rounded-md opacity-10" />
                 <p className="text-orange px-5 py-1 font-semibold tracking-wider">
                   CLAIM
                 </p>
               </button>
             </div>
-            <div className="flex-1 -mt-1">
+            <div className="flex-1 sm:-mt-1 sm:pl-4">
               <div className="text-center">
                 <button
                   onClick={() => setDepositTabActive(true)}
@@ -166,90 +167,9 @@ function App() {
                 </button>
               </div>
 
-              {depositTabActive ? (
-                <div>
-                  <div className="flex-col w-1/2 mx-auto">
-                    <div className="flex">
-                      <div className="mt-5 flex-1">
-                        <input
-                          className="p-2 w-full"
-                          type="text"
-                          placeholder="0"
-                          value={depositAmount}
-                          onChange={(e) => {
-                            const regexp = /^-?\d*\.?\d*$/;
-                            const value = e.target.value;
-                            if (regexp.test(value) || "" === value) {
-                              setDepositAmount(e.target.value);
-                            }
-                          }}
-                        />
-                        <div className="h-px bg-body" />
-                      </div>
-                      <button
-                        className="mt-5 ml-2"
-                        onClick={() => {
-                          if (stakeStore.kangalInfo.userBalance) {
-                            const amount = ethers.utils
-                              .formatUnits(stakeStore.kangalInfo.userBalance)
-                              .replace(",", ".");
-                            setDepositAmount(amount);
-                          }
-                        }}
-                      >
-                        MAX
-                      </button>
-                    </div>
-                    <p className="mt-2 text-xs">
-                      Minimum deposit amount is 500K
-                    </p>
-                  </div>
-                  <button
-                    className="flex mx-auto mt-6 relative"
-                    onClick={() => {
-                      if (stakeStore.kangalInfo?.userBalance?.eq(0)) {
-                        return;
-                      }
-                      if (stakeStore.poolInfo.hasAllowance !== null) {
-                        stakeStore.poolInfo.hasAllowance
-                          ? deposit(depositAmount)
-                          : approve();
-                      }
-                    }}
-                  >
-                    <div className="absolute w-full h-full bg-orange rounded-md opacity-10" />
-                    <p className="text-orange px-5 py-1 font-semibold tracking-wider">
-                      {makeDepositButtonText(stakeStore)}
-                    </p>
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  <div className="mt-2 mx-auto max-w-xs">
-                    <p className="text-xs">
-                      - You will withdraw all of your deposit
-                    </p>
-                    <p className="text-xs">
-                      - You will be able to claim rewards if you've staked
-                      longer than the minimum stake time (2 days) since first
-                      deposit
-                    </p>
-                    <p className="text-xs">
-                      - There is a 0.1% KANGAL withdrawal fee
-                    </p>
-                  </div>
-                  <button
-                    className="flex mx-auto mt-6 relative"
-                    onClick={() => deposit(depositAmount)}
-                  >
-                    <div className="absolute w-full h-full bg-orange rounded-md opacity-10" />
-                    <p className="text-orange px-5 py-1 font-semibold tracking-wider">
-                      WITHDRAW
-                    </p>
-                  </button>
-                </div>
-              )}
+              {depositTabActive ? <DepositTab /> : <WithdrawTab />}
             </div>
+            <div className="sm:hidden h-px w-full mt-4 bg-gray-200" />
           </div>
         </div>
       </div>
@@ -257,22 +177,18 @@ function App() {
   );
 }
 
-function makeDepositButtonText(stakeInfo: StakeStore): string {
-  if (stakeInfo.kangalInfo.userBalance?.eq(0)) {
-    return "NO BALANCE";
-  }
-  return stakeInfo.poolInfo.hasAllowance == null
-    ? "..."
-    : stakeInfo.poolInfo.hasAllowance
-    ? "DEPOSIT"
-    : "APPROVE";
-}
-
 function formatUnits(units: BigNumber | null): string {
   if (units) {
     const remainder = units.mod(1e15);
     const formatted = ethers.utils.formatUnits(units.sub(remainder));
     return ethers.utils.commify(formatted);
+  }
+  return "...";
+}
+
+function formatTLV(number: number | null): string {
+  if (number) {
+    return number.toFixed(3);
   }
   return "...";
 }

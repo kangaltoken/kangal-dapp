@@ -3,6 +3,7 @@ import { ReactComponent as Spinner } from "../assets/images/spinner.svg";
 
 export default function ConnectButton() {
   const walletStore = useWalletStore();
+
   return (
     <div className="flex relative items-center">
       <Spinner
@@ -34,7 +35,7 @@ export default function ConnectButton() {
         </button>
         <p
           className={
-            "text-white text-sm max-w-xs text-center " +
+            "text-white text-xs max-w-xs pl-5 sm:text-sm sm:text-center " +
             (walletStore.networkWarning ? "block" : "hidden")
           }
         >
