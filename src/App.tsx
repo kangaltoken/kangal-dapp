@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { BigNumber, ethers } from "ethers";
 import { PlayState } from "react-gsap";
+import ReactTooltip from "react-tooltip";
 
 import useWalletStore from "./store/walletStore";
 import useStakeStore from "./store/stakeStore";
@@ -54,6 +55,8 @@ function App() {
 
   return (
     <div className="antialiased min-h-screen bg-mainbg pb-10">
+      <ReactTooltip effect="solid" multiline={true} />
+
       {/* Nav */}
       <div className="flex h-20 px-4 sm:px-10 items-center bg-darkBlue">
         <div className="flex h-8">
@@ -144,12 +147,22 @@ function App() {
                 </p>
                 <p>{formatUnits(stakeStore.poolInfo.pendingEarnings)} $TEAK</p>
               </div>
-              <button onClick={claim} className="mt-4 relative">
-                <div className="absolute w-full h-full bg-orange rounded-md opacity-10" />
-                <p className="text-orange px-5 py-1 font-semibold tracking-wider">
-                  CLAIM
-                </p>
-              </button>
+              <div className="flex justify-center sm:justify-start mt-4 relative">
+                {!stakeStore.poolInfo.timeLimitPassed && (
+                  <div
+                    data-tip="You will be able to claim rewards <br/>
+                    once you've staked longer than the minimum stake time <br/>
+                    (2 days) since first deposit"
+                    className="mx-auto absolute cursor-help rounded-md w-24 h-full bg-black opacity-10 z-20"
+                  />
+                )}
+                <button onClick={claim} className="relative">
+                  <div className="absolute w-full h-full bg-orange rounded-md opacity-10" />
+                  <p className="text-orange w-24 py-1 font-semibold tracking-wider">
+                    CLAIM
+                  </p>
+                </button>
+              </div>
             </div>
             <div className="flex-1 sm:-mt-1 sm:pl-4">
               <div className="text-center">

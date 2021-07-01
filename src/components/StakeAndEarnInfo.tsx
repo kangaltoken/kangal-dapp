@@ -9,31 +9,42 @@ export default function StakeAndEarnInfo() {
     <div className="p-6 shadow-lg">
       <div className="flex items-center">
         <div className="flex-col text-center">
-          <div className="relative w-24 mx-auto">
+          <div className="relative w-20 sm:w-24 mx-auto">
             <KangalLogoBg />
-            <KangalLogo className="w-11 absolute-center" />
+            <KangalLogo className="w-8 sm:w-11 absolute-center" />
           </div>
-          <p className="text-body text-sm font-semibold">Stake KANGAL</p>
+          <p className="text-body text-sm font-semibold">
+            Stake <br className="block sm:hidden" /> KANGAL
+          </p>
         </div>
-        <div className="w-10 -mt-5 lg:mx-10">
+        <div className="w-10 -mt-10 sm:-mt-5 lg:mx-10">
           <Chevron />
         </div>
-        <div className="flex-col text-center">
-          <div className="relative w-24 mx-auto">
+        <div className="flex-col text-center mr-2">
+          <div className="relative w-20 sm:w-24 mx-auto">
             <SteakLogoBg />
-            <SteakLogo className="w-11 absolute-center" />
+            <SteakLogo className="w-8 sm:w-11 absolute-center" />
           </div>
-          <p className="text-body text-sm font-semibold">Earn $TEAK</p>
+          <p className="text-body text-sm font-semibold">
+            Earn <br className="block sm:hidden" /> $TEAK
+          </p>
         </div>
 
         <div className="flex-col text-center ml-auto">
-          <div className="w-20 h-20 relative">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 relative">
             <div className="absolute w-full h-full rounded-2xl bg-green opacity-10" />
-            <p className="absolute-center text-green text-2xl font-semibold">
+            <p className="absolute-center text-green text-xl sm:text-2xl font-semibold">
               30%
             </p>
           </div>
-          <p className="mt-4 text-body text-sm font-semibold">APR-M</p>
+          <p
+            data-tip="This is the yearly mint rate. <br/>
+            For example, if you stake 1M KANGAL <br/> 
+            you would get 300K $TEAK in one year."
+            className="mt-4 text-body text-sm font-semibold underline cursor-help"
+          >
+            APR-M
+          </p>
         </div>
       </div>
       <p className="mt-5 text-sm">Withdrawal fee: 0.1% KANGAL</p>
