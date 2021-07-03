@@ -47,7 +47,18 @@ export default function StakeAndEarnInfo() {
           </p>
         </div>
       </div>
-      <p className="mt-5 text-sm">Withdrawal fee: 0.1% KANGAL</p>
+      <div className="mt-5 flex flex-col sm:flex-row sm:items-center">
+        <p className="text-sm">Withdrawal fee: 0.1% KANGAL</p>
+        <div className="h-4 w-px bg-black mx-3 hidden sm:block" />
+        <a
+          className="text-sm underline mt-2 sm:mt-0"
+          target="_blank"
+          rel="noreferrer"
+          href="https://docs.kangaltoken.com/contracts/addresses"
+        >
+          Contract Address
+        </a>
+      </div>
     </div>
   );
 }
