@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { BigNumber, ethers } from "ethers";
-import { PlayState } from "react-gsap";
 import ReactTooltip from "react-tooltip";
 
 import useWalletStore from "./store/walletStore";
@@ -20,18 +19,17 @@ import { ReactComponent as DollarIcon } from "./assets/images/dollar-icon.svg";
 import { ReactComponent as BlueCircle } from "./assets/images/blue-circle.svg";
 import { ReactComponent as OrangeCircle } from "./assets/images/orange-circle.svg";
 import { ReactComponent as GreenCircle } from "./assets/images/green-circle.svg";
+import StakersList from "./components/StakersList";
 
 function App() {
   const walletStore = useWalletStore();
   const stakeStore = useStakeStore();
 
   const [depositTabActive, setDepositTabActive] = useState(true);
-  const [playState, setPlayState] = useState(PlayState.pause);
+  const [playState, setPlayState] = useState(false);
 
   useEffect(() => {
-    stakeStore.pendingTx
-      ? setPlayState(PlayState.play)
-      : setPlayState(PlayState.reverse);
+    stakeStore.pendingTx ? setPlayState(true) : setPlayState(false);
   }, [stakeStore.pendingTx]);
 
   useEffect(() => {
@@ -128,7 +126,7 @@ function App() {
           />
         </div>
 
-        <div className="flex flex-col md:flex-row mt-5 bg-white shadow-k overflow-hidden rounded-lg">
+        <div className="flex flex-col md:flex-row mt-5 bg-white shadow-sm overflow-hidden rounded-lg">
           <div className="w-full md:w-1/2">
             <StakeAndEarnInfo />
           </div>
@@ -185,6 +183,12 @@ function App() {
             <div className="sm:hidden h-px w-full mt-4 bg-gray-200" />
           </div>
         </div>
+      </div>
+      <div className="container mx-auto px-4">
+        <div className="mt-10 sm:mt-20">
+          <h1 className="text-body text-4xl font-bold">Top $TEAK'ers</h1>
+        </div>
+        <StakersList />
       </div>
     </div>
   );

@@ -59,19 +59,19 @@ const useStakeStore = create<StakeStore>(
   immerMiddleware((set, get) => ({
     pendingTx: null,
     kangalInfo: {
-      address: ContractAddresses.kangal,
+      address: ContractAddresses.bscMainnet.kangal,
       userBalance: null,
       totalSupply: null,
       priceUsd: null,
     },
     steakInfo: {
-      address: ContractAddresses.teak,
+      address: ContractAddresses.bscMainnet.teak,
       userBalance: null,
       totalSupply: null,
       priceUsd: null,
     },
     poolInfo: {
-      address: ContractAddresses.staking,
+      address: ContractAddresses.bscMainnet.staking,
       hasAllowance: null,
       firstDepositTimestamp: null,
       timeLimitPassed: null,

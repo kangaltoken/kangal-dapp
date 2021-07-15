@@ -1,17 +1,31 @@
-import { useEffect, useState } from "react";
-import { PlayState, Tween } from "react-gsap";
+import { useEffect, useRef, useState } from "react";
+import gsap from "gsap";
 
 import { Tx } from "../store/stakeStore";
 
 import { ReactComponent as Spinner } from "../assets/images/spinner.svg";
 
 interface INotificationPopup {
-  playState: PlayState;
+  playState: boolean;
   transaction: Tx | null;
 }
 
 export default function NotificationPopup(props: INotificationPopup) {
   const [tx, setTx] = useState<Tx>();
+
+  const tl = useRef<gsap.core.Timeline>();
+  useEffect(() => {
+    tl.current = gsap.timeline({ paused: false });
+
+    tl.current
+      .set("#notification-card", {
+        x: "300px",
+      })
+      .to("#notification-card", { autoAlpha: 1, x: "0" });
+  }, []);
+  useEffect(() => {
+    props.playState ? tl.current?.play() : tl.current?.reverse();
+  }, [props.playState]);
 
   useEffect(() => {
     if (props.transaction) {
@@ -20,13 +34,10 @@ export default function NotificationPopup(props: INotificationPopup) {
   }, [props]);
 
   return (
-    <div className="top-2 z-10 h-0 sm:max-w-xs sm:ml-auto">
-      <Tween
-        from={{ opacity: "0", display: "none" }}
-        to={{ opacity: "1", display: "block" }}
-        duration={0.4}
-        ease="back.out(1)"
-        playState={props.playState}
+    <div className="absolute right-0 w-80 h-0">
+      <div
+        id="notification-card"
+        className="top-2 relative z-10 sm:max-w-xs sm:ml-auto opacity-0"
       >
         <div className="p-2">
           <div className="flex items-center px-6 py-4 rounded shadow-xl bg-white">
@@ -46,7 +57,7 @@ export default function NotificationPopup(props: INotificationPopup) {
             </div>
           </div>
         </div>
-      </Tween>
+      </div>
     </div>
   );
 }
