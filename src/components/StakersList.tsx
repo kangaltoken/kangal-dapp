@@ -1,11 +1,12 @@
 import { BigNumber } from "ethers";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
+import { ReactComponent as Spinner } from "../assets/images/spinner.svg";
 import { ReactComponent as Logo } from "../assets/images/kangal-logo.svg";
+
 import StakersListItem from "./StakersListItem";
-import { useRef } from "react";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -47,6 +48,7 @@ export default function StakersList(props: IStakersList) {
   }, []);
 
   function setAnimation() {
+    const windowHeight = window.innerHeight;
     revealRefs.current.forEach((el, index) => {
       gsap.fromTo(
         el,
@@ -60,7 +62,7 @@ export default function StakersList(props: IStakersList) {
           scrollTrigger: {
             id: `section-${index + 1}`,
             trigger: el,
-            start: "top center+=300",
+            start: `top center+=${windowHeight / 2 - 110}`,
             toggleActions: "play none none reverse",
           },
         }
@@ -69,7 +71,7 @@ export default function StakersList(props: IStakersList) {
   }
 
   return (
-    <div className="mt-6 pb-10">
+    <div className="mt-6 pb-40">
       <div className="py-4 bg-white shadow-sm rounded-lg">
         <div className="flex">
           <div className="w-14 text-center font-bold">#</div>
@@ -81,19 +83,26 @@ export default function StakersList(props: IStakersList) {
       </div>
 
       <div className="mt-4 stake-list-item">
-        {items.map((item, index) => (
-          <div id={`index-${index}`} ref={addToRefs}>
-            <StakersListItem
-              key={index}
-              number={index + 1}
-              stakeAmount={BigNumber.from(item[1])}
-              address={item[0]}
-              isUserAddress={
-                props.userAddress.toUpperCase() === item[0].toUpperCase()
-              }
-            />
+        {items.length > 0 ? (
+          <div>
+            {" "}
+            {items.map((item, index) => (
+              <div id={`index-${index}`} ref={addToRefs}>
+                <StakersListItem
+                  key={index}
+                  number={index + 1}
+                  stakeAmount={BigNumber.from(item[1])}
+                  address={item[0]}
+                  isUserAddress={
+                    props.userAddress.toUpperCase() === item[0].toUpperCase()
+                  }
+                />
+              </div>
+            ))}
           </div>
-        ))}
+        ) : (
+          <Spinner className="mx-auto animate-spin h-6 w-6 text-gray-900" />
+        )}
       </div>
     </div>
   );
