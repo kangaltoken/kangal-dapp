@@ -9,11 +9,15 @@ export default function PatternView(props: IPatternView) {
   return (
     <div className="z-0 top-0 left-0 h-full w-14 opacity-30 absolute overflow-hidden">
       <div>
-        <div className="absolute-center" style={{ left: 2, top: -7 }}>
+        <div className="absolute-center" style={{ left: -11.5, top: -7 }}>
           {Array.from({ length: rows }, (_, rowIndex) => (
-            <div key={rowIndex} className={`flex -ml-${rowIndex}`}>
+            <div key={rowIndex} className="flex">
               {Array.from({ length: columns }, (_, columnIndex) => (
-                <div className="text-lg" key={`${rowIndex}-${columnIndex}`}>
+                <div
+                  className="text-lg"
+                  key={`${rowIndex}-${columnIndex}`}
+                  style={{ marginLeft: rowIndex - 8 }}
+                >
                   {props.emoji}
                 </div>
               ))}
