@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { BigNumber, ethers } from "ethers";
+import { BigNumber } from "ethers";
 import ReactTooltip from "react-tooltip";
 
 import useWalletStore from "./store/walletStore";
 import useStakeStore from "./store/stakeStore";
+import { formatAmount } from "./utils/Formatters";
 
 import ConnectButton from "./components/ConnectButton";
 import InfoBox from "./components/InfoBox";
@@ -11,15 +12,16 @@ import StakeAndEarnInfo from "./components/StakeAndEarnInfo";
 import NotificationPopup from "./components/NotificationPopup";
 import DepositTab from "./components/DepositTab";
 import WithdrawTab from "./components/WithdrawTab";
+import StakersList from "./components/StakersList";
 
 import { ReactComponent as Logo } from "./assets/images/kangal-logo.svg";
+import { ReactComponent as KangalSteak } from "./assets/images/kangal-steak.svg";
 import { ReactComponent as SteakLogo } from "./assets/images/steak-logo.svg";
 import { ReactComponent as Logotype } from "./assets/images/kangal-logotype.svg";
 import { ReactComponent as DollarIcon } from "./assets/images/dollar-icon.svg";
 import { ReactComponent as BlueCircle } from "./assets/images/blue-circle.svg";
 import { ReactComponent as OrangeCircle } from "./assets/images/orange-circle.svg";
 import { ReactComponent as GreenCircle } from "./assets/images/green-circle.svg";
-import StakersList from "./components/StakersList";
 
 function App() {
   const walletStore = useWalletStore();
@@ -93,6 +95,12 @@ function App() {
             iconForeground={<Logo />}
           />
           <InfoBox
+            title="STAKED KANGAL BALANCE"
+            amount={formatUnits(stakeStore.poolInfo.stakedBalance)}
+            iconBackground={<GreenCircle />}
+            iconForeground={<KangalSteak />}
+          />
+          <InfoBox
             title="$TEAK BALANCE"
             amount={formatUnits(stakeStore.steakInfo.userBalance)}
             iconBackground={<OrangeCircle />}
@@ -137,13 +145,19 @@ function App() {
                 <p className="text-xs font-bold text-gray-600">
                   CURRENT DEPOSIT
                 </p>
-                <p>{formatUnits(stakeStore.poolInfo.stakedBalance)} KANGAL</p>
+                <p className="flex mt-1 place-content-center font-semibold text-body sm:place-content-start">
+                  <Logo className="w-5 h-7 mr-1 -mt-1" />{" "}
+                  {formatUnits(stakeStore.poolInfo.stakedBalance, 2, false)}{" "}
+                </p>
               </div>
               <div>
                 <p className="text-xs font-bold text-gray-600">
                   PENDING EARNINGS
                 </p>
-                <p>{formatUnits(stakeStore.poolInfo.pendingEarnings)} $TEAK</p>
+                <p className="flex mt-1 place-content-center font-semibold text-body sm:place-content-start">
+                  <SteakLogo className="w-5 h-7 mr-1 -mt-1" />{" "}
+                  {formatUnits(stakeStore.poolInfo.pendingEarnings)}
+                </p>
               </div>
               <div className="flex justify-center sm:justify-start mt-4 relative">
                 {!stakeStore.poolInfo.timeLimitPassed && (
@@ -165,7 +179,9 @@ function App() {
             <div className="flex-1 sm:-mt-1 sm:pl-4">
               <div className="text-center">
                 <button
-                  onClick={() => setDepositTabActive(true)}
+                  onClick={() => {
+                    setDepositTabActive(true);
+                  }}
                   className={"mr-4 " + (depositTabActive ? "active-tab" : "")}
                 >
                   Deposit
@@ -186,26 +202,28 @@ function App() {
       </div>
       <div className="container mx-auto px-4">
         <div className="mt-10 sm:mt-20">
-          <h1 className="text-body text-4xl font-bold">Top $TEAK'ers</h1>
+          <h1 className="text-body text-4xl font-bold">Top $TEAKers</h1>
         </div>
-        <StakersList />
+        <StakersList userAddress={walletStore.address ?? ""} />
       </div>
     </div>
   );
 }
 
-function formatUnits(units: BigNumber | null): string {
+function formatUnits(
+  units: BigNumber | null,
+  maximumFractionDigits: number = 2,
+  compact: boolean = true
+): string {
   if (units) {
-    const remainder = units.mod(1e15);
-    const formatted = ethers.utils.formatUnits(units.sub(remainder));
-    return ethers.utils.commify(formatted);
+    return formatAmount(units, maximumFractionDigits, compact);
   }
   return "...";
 }
 
 function formatTLV(number: number | null): string {
   if (number) {
-    return ethers.utils.commify(number.toFixed(3));
+    return formatAmount(number);
   }
   return "...";
 }

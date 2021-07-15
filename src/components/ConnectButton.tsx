@@ -1,5 +1,6 @@
 import useWalletStore from "../store/walletStore";
 import { ReactComponent as Spinner } from "../assets/images/spinner.svg";
+import { shrinkAddress } from "../utils/Formatters";
 
 export default function ConnectButton() {
   const walletStore = useWalletStore();
@@ -42,8 +43,4 @@ export default function ConnectButton() {
       </div>
     </div>
   );
-}
-
-function shrinkAddress(address: string): string {
-  return address.slice(0, 6) + "..." + address.slice(37, 42);
 }

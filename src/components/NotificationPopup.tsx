@@ -15,7 +15,7 @@ export default function NotificationPopup(props: INotificationPopup) {
 
   const tl = useRef<gsap.core.Timeline>();
   useEffect(() => {
-    tl.current = gsap.timeline({ paused: false });
+    tl.current = gsap.timeline({ paused: true });
 
     tl.current
       .set("#notification-card", {
