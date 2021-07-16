@@ -70,6 +70,35 @@ if (window.ethereum) {
         hasPendingConnect: false,
         networkWarning: `Please switch network to ${state.requiredNetwork.name}`,
       });
+
+      try {
+        window.ethereum
+          .request({
+            method: "wallet_addEthereumChain",
+            params: [
+              {
+                chainId: "0x38",
+                chainName: "BSC Mainnet",
+                nativeCurrency: {
+                  name: "Binance Coin",
+                  symbol: "BNB",
+                  decimals: 18,
+                },
+                rpcUrls: ["https://bsc-dataseed.binance.org/"],
+                blockExplorerUrls: ["https://bscscan.com"],
+              },
+            ],
+          })
+          .then((response: any) => {
+            useWalletStore.setState({
+              hasPendingConnect: false,
+              networkWarning: null,
+            });
+            state.connect();
+          });
+      } catch (error) {
+        console.log(error);
+      }
     } else {
       state.connect();
     }

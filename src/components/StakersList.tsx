@@ -87,9 +87,8 @@ export default function StakersList(props: IStakersList) {
           <div>
             {" "}
             {items.map((item, index) => (
-              <div id={`index-${index}`} ref={addToRefs}>
+              <div key={index} id={`index-${index}`} ref={addToRefs}>
                 <StakersListItem
-                  key={index}
                   number={index + 1}
                   stakeAmount={BigNumber.from(item[1])}
                   address={item[0]}
