@@ -1,79 +1,231 @@
-import { useEffect, useState } from "react";
-import Web3Modal from "web3modal";
-import WalletConnectProvider from "@walletconnect/web3-provider";
-import { ethers } from "ethers";
+import { useState, useEffect } from "react";
+import { BigNumber } from "ethers";
+import ReactTooltip from "react-tooltip";
 
-const providerOptions = {
-  walletconnect: {
-    package: WalletConnectProvider,
-    options: {
-      infuraId: "9f0c48b0a30441c8b0f736595f426577",
-    },
-  },
-};
+import useWalletStore from "./store/walletStore";
+import useStakeStore from "./store/stakeStore";
+import { formatAmount } from "./utils/Formatters";
+
+import ConnectButton from "./components/ConnectButton";
+import InfoBox from "./components/InfoBox";
+import StakeAndEarnInfo from "./components/StakeAndEarnInfo";
+import NotificationPopup from "./components/NotificationPopup";
+import DepositTab from "./components/DepositTab";
+import WithdrawTab from "./components/WithdrawTab";
+import StakersList from "./components/StakersList";
+
+import { ReactComponent as Logo } from "./assets/images/kangal-logo.svg";
+import { ReactComponent as KangalSteak } from "./assets/images/kangal-steak.svg";
+import { ReactComponent as SteakLogo } from "./assets/images/steak-logo.svg";
+import { ReactComponent as Logotype } from "./assets/images/kangal-logotype.svg";
+import { ReactComponent as DollarIcon } from "./assets/images/dollar-icon.svg";
+import { ReactComponent as BlueCircle } from "./assets/images/blue-circle.svg";
+import { ReactComponent as OrangeCircle } from "./assets/images/orange-circle.svg";
+import { ReactComponent as GreenCircle } from "./assets/images/green-circle.svg";
 
 function App() {
-  async function showModal() {
-    const web3Modal = new Web3Modal({
-      cacheProvider: true,
-      providerOptions,
-    });
-    web3Modal.clearCachedProvider();
-    const web3Provider = await web3Modal.connect();
-    const provider = new ethers.providers.Web3Provider(web3Provider);
-    let address = await provider.getSigner().getAddress();
-    selectedWalletSet(address);
-  }
+  const walletStore = useWalletStore();
+  const stakeStore = useStakeStore();
+
+  const [depositTabActive, setDepositTabActive] = useState(true);
+  const [playState, setPlayState] = useState(false);
 
   useEffect(() => {
-    async function connectOnStart() {
-      const web3Modal = new Web3Modal({
-        cacheProvider: true,
-        providerOptions,
-      });
-      const web3Provider = await web3Modal.connect();
-      const provider = new ethers.providers.Web3Provider(web3Provider);
-      let address = await provider.getSigner().getAddress();
-      selectedWalletSet(address);
-    }
-    connectOnStart();
-  }, []);
+    stakeStore.pendingTx ? setPlayState(true) : setPlayState(false);
+  }, [stakeStore.pendingTx]);
 
-  const [selectedWallet, selectedWalletSet] = useState<string>("");
+  useEffect(() => {
+    if (walletStore.provider && walletStore.address) {
+      stakeStore.fetchInfo(walletStore.provider, walletStore.address);
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [walletStore.provider, walletStore.address]);
+
+  const claim = () => {
+    if (walletStore.provider) {
+      if (
+        !stakeStore.poolInfo.pendingEarnings?.eq(0) &&
+        stakeStore.poolInfo.timeLimitPassed
+      ) {
+        stakeStore.claim(walletStore.provider);
+      }
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center text-white bg-gradient-to-br from-gray-600 via-teal-700 to-gray-800">
-      <div className="flex items-center">
-        <svg viewBox="0 0 64 64" className="w-32 fill-current text-indigo-500">
-          <path d="M52.275 22.147a63.008 63.008 0 0 0-2.025-.637c.112-.462.212-.925.313-1.387 1.537-7.45.524-13.437-2.888-15.412-3.287-1.888-8.65.075-14.075 4.8-.538.462-1.063.95-1.563 1.437-.337-.325-.687-.65-1.037-.962-5.688-5.05-11.387-7.175-14.8-5.188-3.275 1.9-4.25 7.537-2.875 14.587.138.7.288 1.388.463 2.088-.8.224-1.588.474-2.325.737C4.788 24.522 0 28.172 0 31.947c0 3.9 5.1 7.812 12.037 10.187.563.187 1.125.375 1.7.537a45.04 45.04 0 0 0-.5 2.25c-1.312 6.937-.287 12.437 2.988 14.324 3.375 1.95 9.05-.05 14.575-4.887.438-.387.875-.787 1.312-1.212.55.537 1.125 1.05 1.7 1.55 5.35 4.6 10.638 6.462 13.9 4.574 3.375-1.95 4.475-7.862 3.05-15.061a52.467 52.467 0 0 0-.374-1.688c.4-.112.787-.237 1.175-.362C58.775 39.772 64 35.909 64 31.947c0-3.787-4.925-7.462-11.725-9.8zM35.362 11.536c4.65-4.05 8.988-5.638 10.963-4.5 2.112 1.212 2.925 6.112 1.6 12.55a20.19 20.19 0 0 1-.287 1.249 63.994 63.994 0 0 0-8.413-1.325 63.153 63.153 0 0 0-5.325-6.637c.488-.463.962-.9 1.462-1.337zM20.9 38.434a86.067 86.067 0 0 0 1.975 3.237 56.605 56.605 0 0 1-5.8-.937c.55-1.8 1.238-3.662 2.038-5.562a82.583 82.583 0 0 0 1.787 3.262zm-3.787-15.037c1.8-.4 3.712-.725 5.7-.975a73.891 73.891 0 0 0-1.925 3.175 73.904 73.904 0 0 0-1.776 3.25 59.594 59.594 0 0 1-2-5.45zm3.425 8.612a78.537 78.537 0 0 1 2.674-5.074 75.374 75.374 0 0 1 3.05-4.863A78.408 78.408 0 0 1 32 21.86c1.95 0 3.875.075 5.737.212a87.325 87.325 0 0 1 3.038 4.838 85.138 85.138 0 0 1 2.712 5.05 82.936 82.936 0 0 1-2.7 5.1 85.374 85.374 0 0 1-3.024 4.874c-1.863.137-3.8.2-5.763.2-1.962 0-3.863-.063-5.7-.175a76.007 76.007 0 0 1-5.762-9.95zm22.574 6.4a86.342 86.342 0 0 0 1.825-3.337c.8 1.812 1.5 3.65 2.113 5.537-1.938.437-3.9.775-5.875 1a83.722 83.722 0 0 0 1.938-3.2zm1.8-9.562c-.587-1.1-1.187-2.2-1.812-3.275a81.255 81.255 0 0 0-1.913-3.15c2.013.25 3.938.588 5.738 1a55.315 55.315 0 0 1-2.012 5.425zM32.026 14.785a54.888 54.888 0 0 1 3.7 4.475 81.997 81.997 0 0 0-7.438 0 63.146 63.146 0 0 1 3.738-4.475zm-14.5-7.662c2.1-1.225 6.763.525 11.675 4.875.313.275.625.575.95.875a63.504 63.504 0 0 0-5.362 6.637c-2.826.25-5.625.688-8.4 1.3-.163-.637-.3-1.287-.438-1.937-1.175-6.05-.4-10.612 1.575-11.75zm-3.062 32.949a31.894 31.894 0 0 1-1.55-.488c-2.663-.837-5.688-2.162-7.876-3.9a5.609 5.609 0 0 1-2.35-3.737c0-2.287 3.95-5.212 9.65-7.2.713-.25 1.438-.475 2.163-.687a66.462 66.462 0 0 0 3.063 7.95 68.322 68.322 0 0 0-3.1 8.062zM29.038 52.32a22.88 22.88 0 0 1-7.05 4.412 5.533 5.533 0 0 1-4.413.163c-1.987-1.15-2.813-5.563-1.688-11.5.138-.7.288-1.4.463-2.087 2.8.6 5.625 1.012 8.487 1.225a65.963 65.963 0 0 0 5.4 6.674c-.4.388-.8.763-1.2 1.113zm3.062-3.037a59.114 59.114 0 0 1-3.788-4.538c1.2.05 2.438.075 3.688.075 1.288 0 2.55-.025 3.8-.087a53.904 53.904 0 0 1-3.7 4.55zm16.337 3.75a5.555 5.555 0 0 1-2.062 3.912c-1.987 1.15-6.225-.35-10.8-4.275-.525-.45-1.05-.938-1.588-1.438a61.833 61.833 0 0 0 5.276-6.7 61.623 61.623 0 0 0 8.525-1.312c.125.513.237 1.025.337 1.525.612 2.7.712 5.512.313 8.287zm2.276-13.437c-.35.112-.7.225-1.063.325a63.494 63.494 0 0 0-3.188-7.975 63.177 63.177 0 0 0 3.063-7.862c.65.187 1.275.387 1.875.587 5.825 2 9.913 4.975 9.913 7.25 0 2.45-4.363 5.612-10.6 7.675zM32 37.722a5.724 5.724 0 0 0 5.725-5.725A5.724 5.724 0 0 0 32 26.272a5.724 5.724 0 0 0-5.725 5.725A5.724 5.724 0 0 0 32 37.722z" />
-        </svg>
-        <span className="text-6xl pl-5 pr-2">+</span>
-        <svg
-          className="w-32 fill-current text-indigo-500"
-          viewBox="0 0 64 64"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M13.5 11.1C15.3 3.9 19.8.3 27 .3c10.8 0 12.15 8.1 17.55 9.45 3.6.9 6.75-.45 9.45-4.05-1.8 7.2-6.3 10.8-13.5 10.8-10.8 0-12.15-8.1-17.55-9.45-3.6-.9-6.75.45-9.45 4.05zM0 27.3c1.8-7.2 6.3-10.8 13.5-10.8 10.8 0 12.15 8.1 17.55 9.45 3.6.9 6.75-.45 9.45-4.05-1.8 7.2-6.3 10.8-13.5 10.8-10.8 0-12.15-8.1-17.55-9.45-3.6-.9-6.75.45-9.45 4.05z"
-            transform="translate(5 16)"
-          ></path>
-        </svg>
+    <div className="antialiased min-h-screen bg-mainbg pb-10">
+      <ReactTooltip effect="solid" multiline={true} />
+
+      {/* Nav */}
+      <div className="flex h-20 px-4 sm:px-10 items-center bg-darkBlue">
+        <div className="flex h-8">
+          <Logo className="w-8 h-8" />
+          <Logotype className="ml-2 mt-2" />
+        </div>
+        <div className="ml-auto">
+          <ConnectButton />
+        </div>
       </div>
 
-      <div className="mt-4 flex justify-center">
-        <button
-          onClick={showModal}
-          className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded"
-        >
-          Connect wallet
-        </button>
+      <div className="sticky top-0 z-10">
+        <NotificationPopup
+          playState={playState}
+          transaction={stakeStore.pendingTx}
+        />
       </div>
-      <div className="mt-3">
-        <p>SelectedWallet:</p>
-        <p className="break-all">{selectedWallet}</p>
+
+      <div className="mt-4 px-4 flex">
+        <div className="mx-auto bg-white shadow-sm px-3 py-2 rounded">
+          Using Smart Contracts, Tokens, and Crypto is always a risk. DYOR
+          before investing.
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="container mx-auto px-4">
+        <div className="mt-10">
+          <h1 className="text-body text-4xl font-bold">Wallet</h1>
+        </div>
+        <div className="flex-col space-y-4 sm:flex sm:flex-row sm:space-y-0 sm:space-x-8 mt-6">
+          <InfoBox
+            title="KANGAL BALANCE"
+            amount={formatUnits(stakeStore.kangalInfo.userBalance)}
+            iconBackground={<BlueCircle />}
+            iconForeground={<Logo />}
+          />
+          <InfoBox
+            title="STAKED KANGAL BALANCE"
+            amount={formatUnits(stakeStore.poolInfo.stakedBalance)}
+            iconBackground={<GreenCircle />}
+            iconForeground={<KangalSteak />}
+          />
+          <InfoBox
+            title="$TEAK BALANCE"
+            amount={formatUnits(stakeStore.steakInfo.userBalance)}
+            iconBackground={<OrangeCircle />}
+            iconForeground={<SteakLogo />}
+          />
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4">
+        <div className="mt-10 sm:mt-20">
+          <h1 className="text-body text-4xl font-bold">Stake for $TEAK</h1>
+        </div>
+        <div className="flex-col space-y-4 sm:flex sm:flex-row sm:space-y-0 sm:space-x-8 mt-6">
+          <InfoBox
+            title="TOTAL KANGAL STAKED"
+            amount={formatUnits(stakeStore.poolInfo.totalStakedBalance)}
+            iconBackground={<BlueCircle />}
+            iconForeground={<Logo />}
+          />
+          <InfoBox
+            title="TOTAL VALUE LOCKED"
+            amount={formatTLV(stakeStore.poolInfo.totalLockedValue)}
+            iconBackground={<GreenCircle />}
+            iconForeground={<DollarIcon />}
+          />
+          <InfoBox
+            title="TOTAL $TEAK CLAIMED"
+            amount={formatUnits(stakeStore.steakInfo.totalSupply)}
+            iconBackground={<OrangeCircle />}
+            iconForeground={<SteakLogo />}
+          />
+        </div>
+
+        <div className="flex flex-col md:flex-row mt-5 bg-white shadow-sm overflow-hidden rounded-lg">
+          <div className="w-full md:w-1/2">
+            <StakeAndEarnInfo />
+          </div>
+
+          <div className="flex flex-col sm:flex-row p-4 md:w-1/2">
+            <div className="flex-col order-last mt-6 text-center sm:mt-0 sm:order-first sm:text-left">
+              <div className="mb-4">
+                <p className="text-xs font-bold text-gray-600">
+                  CURRENT DEPOSIT
+                </p>
+                <p className="flex mt-1 place-content-center font-semibold text-body sm:place-content-start">
+                  <Logo className="w-5 h-7 mr-1 -mt-1" />{" "}
+                  {formatUnits(stakeStore.poolInfo.stakedBalance, 2, false)}{" "}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-bold text-gray-600">
+                  PENDING EARNINGS
+                </p>
+                <p className="flex mt-1 place-content-center font-semibold text-body sm:place-content-start">
+                  <SteakLogo className="w-5 h-7 mr-1 -mt-1" />{" "}
+                  {formatUnits(stakeStore.poolInfo.pendingEarnings)}
+                </p>
+              </div>
+              <div className="flex justify-center sm:justify-start mt-4 relative">
+                {!stakeStore.poolInfo.timeLimitPassed && (
+                  <div
+                    data-tip="You will be able to claim rewards <br/>
+                    once you've staked longer than the minimum stake time <br/>
+                    (2 days) since first deposit"
+                    className="mx-auto absolute cursor-help rounded-md w-24 h-full bg-black opacity-10 z-20"
+                  />
+                )}
+                <button onClick={claim} className="relative">
+                  <div className="absolute w-full h-full bg-orange rounded-md opacity-10" />
+                  <p className="text-orange w-24 py-1 font-semibold tracking-wider">
+                    CLAIM
+                  </p>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 sm:-mt-1 sm:pl-4">
+              <div className="text-center">
+                <button
+                  onClick={() => {
+                    setDepositTabActive(true);
+                  }}
+                  className={"mr-4 " + (depositTabActive ? "active-tab" : "")}
+                >
+                  Deposit
+                </button>
+                <button
+                  onClick={() => setDepositTabActive(false)}
+                  className={"" + (!depositTabActive ? "active-tab" : "")}
+                >
+                  Withdraw
+                </button>
+              </div>
+
+              {depositTabActive ? <DepositTab /> : <WithdrawTab />}
+            </div>
+            <div className="sm:hidden h-px w-full mt-4 bg-gray-200" />
+          </div>
+        </div>
+      </div>
+      <div className="container mx-auto px-4">
+        <div className="mt-10 sm:mt-20">
+          <h1 className="text-body text-4xl font-bold">Top $TEAKers</h1>
+        </div>
+        <StakersList userAddress={walletStore.address ?? ""} />
       </div>
     </div>
   );
+}
+
+function formatUnits(
+  units: BigNumber | null,
+  maximumFractionDigits: number = 2,
+  compact: boolean = true
+): string {
+  if (units) {
+    return formatAmount(units, maximumFractionDigits, compact);
+  }
+  return "...";
+}
+
+function formatTLV(number: number | null): string {
+  if (number) {
+    return formatAmount(number);
+  }
+  return "...";
 }
 
 export default App;

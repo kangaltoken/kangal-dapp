@@ -13,3 +13,37 @@
 /* Stop purging. */
 
 /* Your own custom utilities */
+
+@layer base {
+  @font-face {
+    font-family: "Gilroy";
+    font-style: normal;
+    font-weight: 400;
+    src: url("../assets/fonts/Gilroy-Regular.woff2") format("woff2"),
+      url("../assets/fonts/Gilroy-Regular.woff") format("woff");
+  }
+  @font-face {
+    font-family: "Gilroy";
+    font-style: semibold;
+    font-weight: 600;
+    src: url("../assets/fonts/Gilroy-Semibold.woff2") format("woff2"),
+      url("../assets/fonts/Gilroy-Semibold.woff") format("woff");
+  }
+  @font-face {
+    font-family: "Gilroy";
+    font-style: bold;
+    font-weight: 700;
+    src: url("../assets/fonts/Gilroy-Bold.woff2") format("woff2"),
+      url("../assets/fonts/Gilroy-Bold.woff") format("woff");
+  }
+}
+
+@layer utilities {
+  .absolute-center {
+    @apply absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2;
+  }
+
+  .active-tab {
+    @apply underline font-bold;
+  }
+}
