@@ -53,11 +53,11 @@ export default function StakersList(props: IStakersList) {
       gsap.fromTo(
         el,
         {
-          autoAlpha: 0,
+          alpha: 0,
         },
         {
           duration: 0.4,
-          autoAlpha: 1,
+          alpha: 1,
           ease: "none",
           scrollTrigger: {
             id: `section-${index + 1}`,
