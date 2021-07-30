@@ -37,6 +37,9 @@ export default function Navigation() {
       <nav className="absolute">
         <ul>
           <li>
+            <Link to="/test">Test</Link>
+          </li>
+          <li>
             <Link to="/">Staking</Link>
           </li>
           <li>

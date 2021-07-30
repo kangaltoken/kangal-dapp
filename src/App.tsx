@@ -11,6 +11,9 @@ function App() {
       <Router>
         <Navigation />
         <Switch>
+          <Route path="/test">
+            <div>Test page</div>
+          </Route>
           <Route path="/bridge">
             <Bridge />
           </Route>
