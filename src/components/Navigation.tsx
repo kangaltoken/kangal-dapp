@@ -22,9 +22,9 @@ export default function Navigation() {
       <div className="flex relative z-10 h-20 px-4 sm:px-10 items-center bg-darkBlue">
         <div className="flex h-8">
           <Logo className="w-8 h-8" />
-          <Logotype className="ml-2 mt-2" />
+          <Logotype className="hidden sm:block ml-2 mt-2" />
         </div>
-        <nav className="hidden sm:block absolute-center">
+        <nav className="hidden md:block absolute-center">
           <ul className="flex justify-center space-x-4">
             <li className="">
               <Link to="/">
@@ -58,7 +58,7 @@ export default function Navigation() {
       </div>
 
       {/* Nav on mobile */}
-      <nav className="sm:hidden flex-1 bg-darkBlue overflow-hidden">
+      <nav className="md:hidden flex-1 bg-darkBlue overflow-hidden">
         <ul className="flex justify-center space-x-4">
           <li className="">
             <Link to="/">

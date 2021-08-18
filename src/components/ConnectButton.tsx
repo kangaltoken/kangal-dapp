@@ -1,11 +1,11 @@
 import useWalletStore from "../store/walletStore";
+
 import { ReactComponent as Spinner } from "../assets/images/spinner.svg";
 import { ReactComponent as BSCIcon } from "../assets/images/bsc.svg";
 import { ReactComponent as PolygonIcon } from "../assets/images/polygon.svg";
 import { ReactComponent as Chevron } from "../assets/images/chevron.svg";
 
 import { shrinkAddress } from "../utils/Formatters";
-import SelectView from "./SelectView";
 
 export default function ConnectButton() {
   const walletStore = useWalletStore();

@@ -44,6 +44,13 @@ export default function Bridge() {
 
   return (
     <div className="container mx-auto px-4">
+      <div className="mt-4 px-4 flex">
+        <div className="mx-auto bg-white shadow-sm px-3 py-2 rounded">
+          Using Smart Contracts, Tokens, and Crypto is always a risk. DYOR
+          before investing.
+        </div>
+      </div>
+
       <div className="mt-10">
         <h1 className="text-body text-4xl font-bold">Cross-Chain Bridge</h1>
       </div>
