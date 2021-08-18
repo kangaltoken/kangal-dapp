@@ -11,9 +11,6 @@ const pancakePairAbi = [
   "function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast)",
 ];
 
-const kangalBnbPairAddress = "0x4E3f77687dd3C61F4e1B919aa4Ded90AE1766894";
-const wbnbBusdPairAddress = "0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16";
-
 export type Tx = {
   type: string;
   hash: string;
@@ -42,9 +39,11 @@ export type StakeStore = {
   kangalInfo: TokenInfo;
   steakInfo: TokenInfo;
   poolInfo: PoolInfo;
+  kangalPairAddress: string;
+  stablePairAddress: string;
   fetchInfo: (
     provider: ethers.providers.Web3Provider,
-    address: string
+    userAddress: string
   ) => Promise<void>;
   approve: (provider: ethers.providers.Web3Provider) => Promise<void>;
   deposit: (
@@ -80,6 +79,8 @@ const useStakeStore = create<StakeStore>(
       pendingEarnings: null,
       totalLockedValue: null,
     },
+    kangalPairAddress: ContractAddresses.bscMainnet.kangalPair,
+    stablePairAddress: ContractAddresses.bscMainnet.stablePair,
     fetchInfo: async (provider, address) => {
       try {
         const kangal = ERC20__factory.connect(
@@ -116,33 +117,33 @@ const useStakeStore = create<StakeStore>(
           now - firstDepositTimestamp.toNumber() > timeLimit.toNumber();
 
         const kangalPair = new ethers.Contract(
-          kangalBnbPairAddress,
+          get().kangalPairAddress,
           pancakePairAbi,
           provider
         );
-        const wbnbPair = new ethers.Contract(
-          wbnbBusdPairAddress,
+        const stablePair = new ethers.Contract(
+          get().stablePairAddress,
           pancakePairAbi,
           provider
         );
         const kangalPairReserves = await kangalPair.getReserves();
-        const wbnbPairReserves = await wbnbPair.getReserves();
+        const stablePairReserves = await stablePair.getReserves();
 
         const kangalPairKangal = Number(
           ethers.utils.formatUnits(kangalPairReserves[0])
         );
-        const kangalPairBnb = Number(
+        const kangalPairOther = Number(
           ethers.utils.formatUnits(kangalPairReserves[1])
         );
 
-        const wbnbPairWbnb = Number(
-          ethers.utils.formatUnits(wbnbPairReserves[0])
+        const stablePairToken = Number(
+          ethers.utils.formatUnits(stablePairReserves[0])
         );
-        const wbnbPairBusd = Number(
-          ethers.utils.formatUnits(wbnbPairReserves[1])
+        const stablePairUSD = Number(
+          ethers.utils.formatUnits(stablePairReserves[1])
         );
-        const bnbPrice = wbnbPairBusd / wbnbPairWbnb;
-        const kangalPrice = (kangalPairKangal / kangalPairBnb) * bnbPrice;
+        const bnbPrice = stablePairUSD / stablePairToken;
+        const kangalPrice = (kangalPairKangal / kangalPairOther) * bnbPrice;
         const totalLockedValue =
           kangalPrice * Number(ethers.utils.formatUnits(totalStakedBalance));
 
