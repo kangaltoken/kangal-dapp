@@ -2,26 +2,47 @@ import { ethers } from "ethers";
 import Web3Modal from "web3modal";
 import create from "zustand";
 
-type Network = {
+import useStakeStore from "../store/stakeStore";
+
+export type Network = {
   name: string;
   chainId: number;
+  networkExplorerName: string;
+  networkExporerUrl: string;
+};
+
+const bsc: Network = {
+  name: "BSC",
+  chainId: 56,
+  networkExplorerName: "Bscscan",
+  networkExporerUrl: "https://bscscan.com/",
+};
+const polygon: Network = {
+  name: "Polygon",
+  chainId: 137,
+  networkExplorerName: "Polygonscan",
+  networkExporerUrl: "https://polygonscan.com/",
 };
 
 type WalletStore = {
   hasMetamask: boolean;
   hasPendingConnect: boolean;
   requiredNetwork: Network;
+  networkOptions: Network[];
   provider: ethers.providers.Web3Provider | null;
   address: string | null;
   networkWarning: string | null;
   connect: () => Promise<void>;
   disconnect: () => void;
+  changeRequiredNetwork: (network: Network) => Promise<void>;
+  onNetworkChange: (chainId: number) => Promise<void>;
 };
 
 const useWalletStore = create<WalletStore>((set, get) => ({
   hasMetamask: false,
   hasPendingConnect: true,
-  requiredNetwork: { name: "Binance Smart Chain", chainId: 56 },
+  requiredNetwork: getRequiredNetwork(),
+  networkOptions: [bsc, polygon],
   provider: null,
   address: null,
   networkWarning: null,
@@ -46,7 +67,60 @@ const useWalletStore = create<WalletStore>((set, get) => ({
     web3Modal.clearCachedProvider();
     set({ provider: null, address: null });
   },
+  changeRequiredNetwork: async (network: Network) => {
+    set({ requiredNetwork: network });
+    localStorage.setItem("requiredNetwork", network.name);
+    set((state) => {
+      state.hasPendingConnect = false;
+      state.networkWarning = `Please switch network to ${state.requiredNetwork.name}`;
+    });
+    try {
+      await window.ethereum.request(
+        network.chainId === 56 ? bscNetworkInfo : polygonNetworkInfo
+      );
+      set({
+        hasPendingConnect: false,
+        networkWarning: null,
+      });
+      await useStakeStore.getState().onNetworkChange(network.name);
+      get().connect();
+    } catch (error) {
+      console.log(error);
+    }
+  },
+  onNetworkChange: async (chainId: number) => {
+    if (get().requiredNetwork.chainId !== chainId) {
+      set((state) => {
+        state.hasPendingConnect = false;
+        state.networkWarning = `Please switch network to ${state.requiredNetwork.name}`;
+      });
+    }
+    try {
+      await window.ethereum.request(
+        get().requiredNetwork.chainId === 56
+          ? bscNetworkInfo
+          : polygonNetworkInfo
+      );
+      set({
+        hasPendingConnect: false,
+        networkWarning: null,
+      });
+      get().connect();
+    } catch (error) {
+      console.log(error);
+    }
+  },
 }));
+
+function getRequiredNetwork(): Network {
+  const savedItem = localStorage.getItem("requiredNetwork");
+
+  if (savedItem === "Polygon") {
+    return polygon;
+  }
+
+  return bsc;
+}
 
 const providerOptions = {};
 const web3Modal = new Web3Modal({
@@ -63,45 +137,8 @@ if (window.ethereum) {
     hasMetamask: true,
   });
   windowProvider.on("network", (newNetwork, _) => {
-    let state = useWalletStore.getState();
-
-    if (newNetwork.chainId !== state.requiredNetwork.chainId) {
-      useWalletStore.setState({
-        hasPendingConnect: false,
-        networkWarning: `Please switch network to ${state.requiredNetwork.name}`,
-      });
-
-      try {
-        window.ethereum
-          .request({
-            method: "wallet_addEthereumChain",
-            params: [
-              {
-                chainId: "0x38",
-                chainName: "BSC Mainnet",
-                nativeCurrency: {
-                  name: "Binance Coin",
-                  symbol: "BNB",
-                  decimals: 18,
-                },
-                rpcUrls: ["https://bsc-dataseed.binance.org/"],
-                blockExplorerUrls: ["https://bscscan.com"],
-              },
-            ],
-          })
-          .then((response: any) => {
-            useWalletStore.setState({
-              hasPendingConnect: false,
-              networkWarning: null,
-            });
-            state.connect();
-          });
-      } catch (error) {
-        console.log(error);
-      }
-    } else {
-      state.connect();
-    }
+    let store = useWalletStore.getState();
+    store.onNetworkChange(newNetwork.chainId);
   });
   window.ethereum.on("accountsChanged", (accounts: string[]) => {
     if (accounts.length > 0) {
@@ -119,5 +156,39 @@ if (window.ethereum) {
       "Use Metamask in-app browser or Metamask extenstion to connect your wallet",
   });
 }
+
+const bscNetworkInfo = {
+  method: "wallet_addEthereumChain",
+  params: [
+    {
+      chainId: "0x38",
+      chainName: "BSC Mainnet",
+      nativeCurrency: {
+        name: "Binance Coin",
+        symbol: "BNB",
+        decimals: 18,
+      },
+      rpcUrls: ["https://bsc-dataseed.binance.org/"],
+      blockExplorerUrls: ["https://bscscan.com"],
+    },
+  ],
+};
+
+const polygonNetworkInfo = {
+  method: "wallet_addEthereumChain",
+  params: [
+    {
+      chainId: "0x89",
+      chainName: "Polygon Mainnet",
+      nativeCurrency: {
+        name: "Polygon",
+        symbol: "MATIC",
+        decimals: 18,
+      },
+      rpcUrls: ["https://rpc-mainnet.matic.quiknode.pro"],
+      blockExplorerUrls: ["https://polygonscan.com"],
+    },
+  ],
+};
 
 export default useWalletStore;
