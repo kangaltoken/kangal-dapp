@@ -111,7 +111,9 @@ function Staking() {
 
         <div className="flex flex-col md:flex-row mt-5 bg-white shadow-sm overflow-hidden rounded-lg">
           <div className="w-full md:w-1/2">
-            <StakeAndEarnInfo />
+            <StakeAndEarnInfo
+              aprm={walletStore.requiredNetwork.name === "BSC" ? "30" : "35"}
+            />
           </div>
 
           <div className="flex flex-col sm:flex-row p-4 md:w-1/2">
@@ -179,7 +181,15 @@ function Staking() {
         <div className="mt-10 sm:mt-20">
           <h1 className="text-body text-4xl font-bold">Top $TEAKers</h1>
         </div>
-        <StakersList userAddress={walletStore.address ?? ""} />
+        {walletStore.requiredNetwork.name === "BSC" && (
+          <StakersList userAddress={walletStore.address ?? ""} />
+        )}
+
+        {walletStore.requiredNetwork.name === "Polygon" && (
+          <div className="p-6 mt-4 bg-white rounded-lg shadow-sm">
+            <p>Coming soon!</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -197,6 +207,9 @@ function formatUnits(
 }
 
 function formatTLV(number: number | null): string {
+  if (number === 0) {
+    return "0";
+  }
   if (number) {
     return formatAmount(number);
   }

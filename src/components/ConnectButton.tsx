@@ -37,7 +37,11 @@ export default function ConnectButton() {
             }}
           >
             {walletStore.networkOptions.map((value) => {
-              return <option value={value.chainId}>{value.name}</option>;
+              return (
+                <option key={value.chainId} value={value.chainId}>
+                  {value.name}
+                </option>
+              );
             })}
           </select>
           <div className="absolute w-5 h-full top-0 right-1 pointer-events-none">

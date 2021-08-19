@@ -1,7 +1,5 @@
 import { BigNumber } from "ethers";
 import { useEffect, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { FixedSizeList as List, ListChildComponentProps } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 
@@ -10,8 +8,6 @@ import { ReactComponent as Logo } from "../assets/images/kangal-logo.svg";
 
 import StakersListItem, { IStakersListItem } from "./StakersListItem";
 import emojiForNumber from "../utils/EmojiForNumber";
-
-gsap.registerPlugin(ScrollTrigger);
 
 interface IStakersList {
   userAddress: string;
@@ -69,7 +65,7 @@ export default function StakersList(props: IStakersList) {
   }
 
   return (
-    <div className="mt-6 pb-20">
+    <div className="mt-6 pb-10">
       <div className="py-4 bg-white shadow-sm rounded-lg">
         <div className="flex">
           <div className="w-14 text-center font-bold">#</div>

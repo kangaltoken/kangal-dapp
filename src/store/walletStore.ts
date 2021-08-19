@@ -2,13 +2,27 @@ import { ethers } from "ethers";
 import Web3Modal from "web3modal";
 import create from "zustand";
 
-type Network = {
+import useStakeStore from "../store/stakeStore";
+
+export type Network = {
   name: string;
   chainId: number;
+  networkExplorerName: string;
+  networkExporerUrl: string;
 };
 
-const bsc: Network = { name: "BSC", chainId: 56 };
-const polygon: Network = { name: "Polygon", chainId: 137 };
+const bsc: Network = {
+  name: "BSC",
+  chainId: 56,
+  networkExplorerName: "Bscscan",
+  networkExporerUrl: "https://bscscan.com/",
+};
+const polygon: Network = {
+  name: "Polygon",
+  chainId: 137,
+  networkExplorerName: "Polygonscan",
+  networkExporerUrl: "https://polygonscan.com/",
+};
 
 type WalletStore = {
   hasMetamask: boolean;
@@ -68,6 +82,7 @@ const useWalletStore = create<WalletStore>((set, get) => ({
         hasPendingConnect: false,
         networkWarning: null,
       });
+      await useStakeStore.getState().onNetworkChange(network.name);
       get().connect();
     } catch (error) {
       console.log(error);

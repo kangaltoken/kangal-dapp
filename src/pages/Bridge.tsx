@@ -131,7 +131,7 @@ const BurgerSwapInfo = ({ from, to }: { from: string; to: string }) => (
   <div className="p-6 mt-4 bg-white rounded-lg shadow-sm">
     <p>
       You can use <strong>BurgerSwap bToken bridge</strong> to move your Kangal
-      from {from} to {to}
+      from {from} to {to}.
     </p>
     <a
       className="block text-blue-700 underline mt-4"
@@ -141,6 +141,16 @@ const BurgerSwapInfo = ({ from, to }: { from: string; to: string }) => (
     >
       Go to BurgerSwap bToken bridge
     </a>
+
+    <p className="mt-4">Support:</p>
+    <a
+      className="block text-blue-700 underline "
+      target="_blank"
+      rel="noreferrer"
+      href="https://t.me/burgerswap"
+    >
+      BurgerSwap Telegram
+    </a>
   </div>
 );
 
@@ -148,7 +158,11 @@ const AnySwapInfo = ({ from, to }: { from: string; to: string }) => (
   <div className="p-6 mt-4 bg-white rounded-lg shadow-sm">
     <p>
       You can use <strong>AnySwap bridge</strong> to move your Kangal from{" "}
-      {from} to {to}
+      {from} to {to}.
+    </p>
+    <p className="text-red-500 mt-2">
+      ⚠️ Please make sure you select the correct networks on AnySwap for{" "}
+      <strong>from</strong> and <strong>to</strong> options.
     </p>
     <a
       className="block text-blue-700 underline mt-4"
@@ -157,6 +171,16 @@ const AnySwapInfo = ({ from, to }: { from: string; to: string }) => (
       href="https://router.anyswap.exchange/#/swap?bridgetoken=kangal"
     >
       Go to AnySwap bridge
+    </a>
+
+    <p className="mt-4">Support:</p>
+    <a
+      className="block text-blue-700 underline "
+      target="_blank"
+      rel="noreferrer"
+      href="https://t.me/anyswap"
+    >
+      AnySwap Telegram
     </a>
   </div>
 );
