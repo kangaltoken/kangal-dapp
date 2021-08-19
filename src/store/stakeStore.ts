@@ -6,17 +6,24 @@ import { ERC20__factory } from "../assets/typechain/factories/ERC20__factory";
 import { StakingContract__factory } from "../assets/typechain/factories/StakingContract__factory";
 
 import ContractAddresses from "../constants/contracts";
+import useWalletStore, { Network } from "./walletStore";
 
 const pancakePairAbi = [
   "function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast)",
 ];
 
-const kangalBnbPairAddress = "0x4E3f77687dd3C61F4e1B919aa4Ded90AE1766894";
-const wbnbBusdPairAddress = "0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16";
+export enum TxType {
+  approval = "APPROVAL",
+  deposit = "DEPOSIT",
+  withdraw = "WITHDRAW",
+  rewardClaim = "REWARD CLAIM",
+}
 
 export type Tx = {
-  type: string;
+  type: TxType;
   hash: string;
+  networkExplorerName: string;
+  networkExplorerUrl: string;
 };
 
 type TokenInfo = {
@@ -42,9 +49,11 @@ export type StakeStore = {
   kangalInfo: TokenInfo;
   steakInfo: TokenInfo;
   poolInfo: PoolInfo;
+  kangalPairAddress: string;
+  stablePairAddress: string;
   fetchInfo: (
     provider: ethers.providers.Web3Provider,
-    address: string
+    userAddress: string
   ) => Promise<void>;
   approve: (provider: ethers.providers.Web3Provider) => Promise<void>;
   deposit: (
@@ -53,25 +62,33 @@ export type StakeStore = {
   ) => Promise<void>;
   claim: (provider: ethers.providers.Web3Provider) => Promise<void>;
   withdraw: (provider: ethers.providers.Web3Provider) => Promise<void>;
+  onNetworkChange: (networkName: string) => Promise<void>;
 };
+
+// Get initial contract base
+let initialContractBase = ContractAddresses.bscMainnet;
+const savedItem = localStorage.getItem("requiredNetwork");
+if (savedItem === "Polygon") {
+  initialContractBase = ContractAddresses.polygonMainnet;
+}
 
 const useStakeStore = create<StakeStore>(
   immerMiddleware((set, get) => ({
     pendingTx: null,
     kangalInfo: {
-      address: ContractAddresses.bscMainnet.kangal,
+      address: initialContractBase.kangal,
       userBalance: null,
       totalSupply: null,
       priceUsd: null,
     },
     steakInfo: {
-      address: ContractAddresses.bscMainnet.teak,
+      address: initialContractBase.teak,
       userBalance: null,
       totalSupply: null,
       priceUsd: null,
     },
     poolInfo: {
-      address: ContractAddresses.bscMainnet.staking,
+      address: initialContractBase.staking,
       hasAllowance: null,
       firstDepositTimestamp: null,
       timeLimitPassed: null,
@@ -80,6 +97,8 @@ const useStakeStore = create<StakeStore>(
       pendingEarnings: null,
       totalLockedValue: null,
     },
+    kangalPairAddress: initialContractBase.kangalPair,
+    stablePairAddress: initialContractBase.stablePair,
     fetchInfo: async (provider, address) => {
       try {
         const kangal = ERC20__factory.connect(
@@ -116,33 +135,40 @@ const useStakeStore = create<StakeStore>(
           now - firstDepositTimestamp.toNumber() > timeLimit.toNumber();
 
         const kangalPair = new ethers.Contract(
-          kangalBnbPairAddress,
+          get().kangalPairAddress,
           pancakePairAbi,
           provider
         );
-        const wbnbPair = new ethers.Contract(
-          wbnbBusdPairAddress,
+        const stablePair = new ethers.Contract(
+          get().stablePairAddress,
           pancakePairAbi,
           provider
         );
         const kangalPairReserves = await kangalPair.getReserves();
-        const wbnbPairReserves = await wbnbPair.getReserves();
+        const stablePairReserves = await stablePair.getReserves();
 
         const kangalPairKangal = Number(
           ethers.utils.formatUnits(kangalPairReserves[0])
         );
-        const kangalPairBnb = Number(
+        const kangalPairOther = Number(
           ethers.utils.formatUnits(kangalPairReserves[1])
         );
 
-        const wbnbPairWbnb = Number(
-          ethers.utils.formatUnits(wbnbPairReserves[0])
+        const networkName = useWalletStore.getState().requiredNetwork.name;
+
+        const stablePairToken = Number(
+          ethers.utils.formatUnits(
+            stablePairReserves[networkName === "BSC" ? 0 : 1]
+          )
         );
-        const wbnbPairBusd = Number(
-          ethers.utils.formatUnits(wbnbPairReserves[1])
+        const stablePairUSD = Number(
+          ethers.utils.formatUnits(
+            stablePairReserves[networkName === "BSC" ? 1 : 2]
+          )
         );
-        const bnbPrice = wbnbPairBusd / wbnbPairWbnb;
-        const kangalPrice = (kangalPairKangal / kangalPairBnb) * bnbPrice;
+        const pairedTokenPrice = stablePairUSD / stablePairToken;
+        const kangalPrice =
+          (kangalPairKangal / kangalPairOther) * pairedTokenPrice;
         const totalLockedValue =
           kangalPrice * Number(ethers.utils.formatUnits(totalStakedBalance));
 
@@ -178,7 +204,11 @@ const useStakeStore = create<StakeStore>(
         );
 
         set((state) => {
-          state.pendingTx = { type: "APPROVAL", hash: transaction.hash };
+          state.pendingTx = makeTx(
+            TxType.approval,
+            transaction.hash,
+            useWalletStore.getState().requiredNetwork
+          );
         });
 
         await transaction.wait();
@@ -203,7 +233,11 @@ const useStakeStore = create<StakeStore>(
       const transaction = await stakingContract.deposit(parsedAmount);
 
       set((state) => {
-        state.pendingTx = { type: "DEPOSIT", hash: transaction.hash };
+        state.pendingTx = makeTx(
+          TxType.deposit,
+          transaction.hash,
+          useWalletStore.getState().requiredNetwork
+        );
       });
 
       const receipt = await transaction.wait();
@@ -223,7 +257,11 @@ const useStakeStore = create<StakeStore>(
       const transaction = await stakingContract.claimRewards();
 
       set((state) => {
-        state.pendingTx = { type: "CLAIM REWARDS", hash: transaction.hash };
+        state.pendingTx = makeTx(
+          TxType.rewardClaim,
+          transaction.hash,
+          useWalletStore.getState().requiredNetwork
+        );
       });
 
       const receipt = await transaction.wait();
@@ -243,7 +281,11 @@ const useStakeStore = create<StakeStore>(
       const transaction = await stakingContract.withdraw();
 
       set((state) => {
-        state.pendingTx = { type: "WITHDRAW", hash: transaction.hash };
+        state.pendingTx = makeTx(
+          TxType.withdraw,
+          transaction.hash,
+          useWalletStore.getState().requiredNetwork
+        );
       });
 
       const receipt = await transaction.wait();
@@ -254,7 +296,55 @@ const useStakeStore = create<StakeStore>(
 
       get().fetchInfo(provider, receipt.from);
     },
+    onNetworkChange: async (networkName) => {
+      let contractBase = ContractAddresses.bscMainnet;
+
+      if (networkName === "Polygon") {
+        contractBase = ContractAddresses.polygonMainnet;
+      }
+
+      set((state) => {
+        state.kangalInfo = {
+          address: contractBase.kangal,
+          userBalance: null,
+          totalSupply: null,
+          priceUsd: null,
+        };
+        state.steakInfo = {
+          address: contractBase.teak,
+          userBalance: null,
+          totalSupply: null,
+          priceUsd: null,
+        };
+        state.poolInfo = {
+          address: contractBase.staking,
+          hasAllowance: null,
+          firstDepositTimestamp: null,
+          timeLimitPassed: null,
+          totalStakedBalance: null,
+          stakedBalance: null,
+          pendingEarnings: null,
+          totalLockedValue: null,
+        };
+        state.kangalPairAddress = contractBase.kangalPair;
+        state.stablePairAddress = contractBase.stablePair;
+      });
+    },
   }))
 );
+
+function makeTx(
+  type: TxType,
+  transactionHash: string,
+  requiredNetwork: Network
+): Tx {
+  return {
+    type: type,
+    hash: transactionHash,
+    networkExplorerName: requiredNetwork.networkExplorerName,
+    networkExplorerUrl:
+      requiredNetwork.networkExporerUrl + `tx/${transactionHash}`,
+  };
+}
 
 export default useStakeStore;

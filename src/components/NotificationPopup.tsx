@@ -50,9 +50,9 @@ export default function NotificationPopup(props: INotificationPopup) {
                 className="text-green"
                 target="_blank"
                 rel="noreferrer"
-                href={"https://bscscan.com/tx/" + tx?.hash}
+                href={props.transaction?.networkExplorerUrl ?? ""}
               >
-                See on bscscan.com
+                See on {props.transaction?.networkExplorerName}
               </a>
             </div>
           </div>

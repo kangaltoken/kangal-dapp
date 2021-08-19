@@ -1,35 +1,22 @@
 import { BigNumber } from "ethers";
-import { useEffect, useState, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useEffect, useState } from "react";
+import { FixedSizeList as List, ListChildComponentProps } from "react-window";
+import AutoSizer from "react-virtualized-auto-sizer";
 
 import { ReactComponent as Spinner } from "../assets/images/spinner.svg";
 import { ReactComponent as Logo } from "../assets/images/kangal-logo.svg";
 
-import StakersListItem from "./StakersListItem";
-
-gsap.registerPlugin(ScrollTrigger);
+import StakersListItem, { IStakersListItem } from "./StakersListItem";
+import emojiForNumber from "../utils/EmojiForNumber";
 
 interface IStakersList {
   userAddress: string;
 }
 
 export default function StakersList(props: IStakersList) {
-  const [items, setItems] = useState<any[]>([]);
-
-  const revealRefs = useRef<HTMLDivElement[]>([]);
-  revealRefs.current = [];
-  const addToRefs = (el: HTMLDivElement) => {
-    if (el && !revealRefs.current.includes(el)) {
-      revealRefs.current.push(el);
-    }
-  };
+  const [allItems, setAllItems] = useState<IStakersListItem[]>([]);
 
   useEffect(() => {
-    var myHeaders = new Headers();
-    myHeaders.append("pragma", "no-cache");
-    myHeaders.append("cache-control", "no-cache");
-
     const ms = Date.now();
     fetch(
       "https://kangaltoken.github.io/apis/staking_balances.json" +
@@ -38,40 +25,47 @@ export default function StakersList(props: IStakersList) {
     )
       .then((res) => res.json())
       .then(
-        (result) => {
-          setItems(result);
+        (result: any[]) => {
+          const items = result.map((value, index) => {
+            const listItemProps: IStakersListItem = {
+              number: index + 1,
+              stakeAmount: BigNumber.from(value[1]),
+              address: value[0],
+              isUserAddress:
+                props.userAddress.toUpperCase() === value[0].toUpperCase(),
+              emoji: emojiForNumber(index + 1),
+            };
+            return listItemProps;
+          });
 
-          setAnimation();
+          setAllItems(items);
         },
         (error) => {}
       );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function setAnimation() {
-    const windowHeight = window.innerHeight;
-    revealRefs.current.forEach((el, index) => {
-      gsap.fromTo(
-        el,
-        {
-          autoAlpha: 0,
-        },
-        {
-          duration: 0.4,
-          autoAlpha: 1,
-          ease: "none",
-          scrollTrigger: {
-            id: `section-${index + 1}`,
-            trigger: el,
-            start: `top center+=${windowHeight / 2 - 110}`,
-            toggleActions: "play none none reverse",
-          },
-        }
-      );
-    });
+  function rowRenderer(rowProps: ListChildComponentProps) {
+    return (
+      <div
+        style={{
+          ...rowProps.style,
+        }}
+      >
+        <StakersListItem
+          key={rowProps.index}
+          number={allItems[rowProps.index].number}
+          stakeAmount={allItems[rowProps.index].stakeAmount}
+          address={allItems[rowProps.index].address}
+          isUserAddress={allItems[rowProps.index].isUserAddress}
+          emoji={allItems[rowProps.index].emoji}
+        />
+      </div>
+    );
   }
 
   return (
-    <div className="mt-6 pb-40">
+    <div className="mt-6 pb-10">
       <div className="py-4 bg-white shadow-sm rounded-lg">
         <div className="flex">
           <div className="w-14 text-center font-bold">#</div>
@@ -82,22 +76,21 @@ export default function StakersList(props: IStakersList) {
         </div>
       </div>
 
-      <div className="mt-4 stake-list-item">
-        {items.length > 0 ? (
-          <div>
-            {" "}
-            {items.map((item, index) => (
-              <div key={index} id={`index-${index}`} ref={addToRefs}>
-                <StakersListItem
-                  number={index + 1}
-                  stakeAmount={BigNumber.from(item[1])}
-                  address={item[0]}
-                  isUserAddress={
-                    props.userAddress.toUpperCase() === item[0].toUpperCase()
-                  }
-                />
-              </div>
-            ))}
+      <div className="mt-4 stake-list-item flex">
+        {allItems.length > 0 ? (
+          <div className="w-full rounded overflow-hidden">
+            <AutoSizer disableHeight>
+              {({ width }) => (
+                <List
+                  height={72 * 10 + 30}
+                  itemCount={allItems.length}
+                  itemSize={72}
+                  width={width}
+                >
+                  {rowRenderer}
+                </List>
+              )}
+            </AutoSizer>
           </div>
         ) : (
           <Spinner className="mx-auto animate-spin h-6 w-6 text-gray-900" />

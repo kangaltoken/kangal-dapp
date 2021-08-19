@@ -4,7 +4,11 @@ import { ReactComponent as KangalLogoBg } from "../assets/images/kangal-bg.svg";
 import { ReactComponent as SteakLogoBg } from "../assets/images/steak-bg.svg";
 import { ReactComponent as Chevron } from "../assets/images/chevron.svg";
 
-export default function StakeAndEarnInfo() {
+interface IStakeAndEarnInfo {
+  aprm: string;
+}
+
+export default function StakeAndEarnInfo(props: IStakeAndEarnInfo) {
   return (
     <div className="p-6 shadow-lg">
       <div className="flex items-center">
@@ -34,7 +38,7 @@ export default function StakeAndEarnInfo() {
           <div className="w-16 h-16 sm:w-20 sm:h-20 relative">
             <div className="absolute w-full h-full rounded-2xl bg-green opacity-10" />
             <p className="absolute-center text-green text-xl sm:text-2xl font-semibold">
-              30%
+              {props.aprm}%
             </p>
           </div>
           <p

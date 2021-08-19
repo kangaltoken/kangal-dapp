@@ -1,26 +1,21 @@
 import { BigNumber } from "ethers";
-import { useMemo } from "react";
 import ReactTooltip from "react-tooltip";
 import { formatAmount, shrinkAddress } from "../utils/Formatters";
 import PatternView from "./PatternView";
 
-interface IStakersListItem {
+export interface IStakersListItem {
   number: number;
   stakeAmount: BigNumber;
   address: string;
   isUserAddress: boolean;
+  emoji: string;
 }
 
 export default function StakersListItem(props: IStakersListItem) {
-  const memoizedEmoji = useMemo(
-    () => emojiForNumber(props.number),
-    [props.number]
-  );
-
   return (
     <div className="relative mb-2 overflow-hidden py-4 bg-white text-body shadow-sm rounded-lg">
       <ReactTooltip effect="solid" multiline={true} />
-      <PatternView emoji={memoizedEmoji} />
+      <PatternView emoji={props.emoji} />
       <div className="flex items-center">
         <div className="w-14 text-center z-10 font-bold text-2xl ">
           {props.number}
@@ -45,57 +40,4 @@ export default function StakersListItem(props: IStakersListItem) {
       </div>
     </div>
   );
-}
-
-function emojiForNumber(number: number): string {
-  switch (number) {
-    case 1:
-      return "🏆";
-    case 2:
-      return "🥈";
-    case 3:
-      return "🥉";
-
-    default:
-      const defaultEmojis = [
-        "💛",
-        "🧡",
-        "💙",
-        "❤️",
-        "🐶",
-        "🐕",
-        "🦮",
-        "🐩",
-        "🐕‍🦺",
-        "🐾",
-        "🥩",
-        "🦴",
-        "🌝",
-        "🙈",
-        "🐒",
-        "🙉",
-        "🐵",
-        "🦍",
-        "🤠",
-        "🦧",
-        "👀",
-        "🥵",
-        "😇",
-        "😝",
-        "🥸",
-        "😤",
-        "🤗",
-        "✊",
-        "💅",
-        "🙆‍♂️",
-        "🙇‍♂️",
-        "🙅‍♀️",
-        "💆‍♀️",
-        "💆",
-        "👩‍🌾",
-        "👴",
-      ];
-
-      return defaultEmojis[Math.floor(Math.random() * defaultEmojis.length)];
-  }
 }
