@@ -3,12 +3,19 @@ import { ReactComponent as SteakLogo } from "../assets/images/steak-logo.svg";
 import { ReactComponent as KangalLogoBg } from "../assets/images/kangal-bg.svg";
 import { ReactComponent as SteakLogoBg } from "../assets/images/steak-bg.svg";
 import { ReactComponent as Chevron } from "../assets/images/chevron.svg";
+import { useEffect, useState } from "react";
 
 interface IStakeAndEarnInfo {
   aprm: string;
 }
 
 export default function StakeAndEarnInfo(props: IStakeAndEarnInfo) {
+  const [interestExample, setInterestExample] = useState("300K");
+
+  useEffect(() => {
+    const interest = 10 * Number(props.aprm);
+    setInterestExample(`${interest}K`);
+  }, [props.aprm]);
   return (
     <div className="p-6 shadow-lg">
       <div className="flex items-center">
@@ -42,9 +49,9 @@ export default function StakeAndEarnInfo(props: IStakeAndEarnInfo) {
             </p>
           </div>
           <p
-            data-tip="This is the yearly mint rate. <br/>
+            data-tip={`This is the yearly mint rate. <br/>
             For example, if you stake 1M KANGAL <br/> 
-            you would get 300K $TEAK in one year."
+            you would get ${interestExample} $TEAK in one year.`}
             className="mt-4 text-body text-sm font-semibold underline cursor-help"
           >
             APR-M
