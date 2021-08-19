@@ -12,8 +12,8 @@ export default function ConnectButton() {
 
   return (
     <div className="flex relative items-center">
-      <div className="flex-row mr-4">
-        <p className="text-white text-center font-semibold">Network</p>
+      <div className="flex-row ml-4 mr-2 sm:ml-0 sm:mr-4">
+        <p className="text-white leading-4 font-semibold mt-2">Network</p>
         <div className="flex items-center space-x-2 relative">
           <div className="relative -top-px">
             {walletStore.requiredNetwork.chainId === 56 ? (
@@ -44,7 +44,14 @@ export default function ConnectButton() {
               );
             })}
           </select>
-          <div className="absolute w-5 h-full top-0 right-1 pointer-events-none">
+          <div
+            className={
+              "absolute w-5 h-full top-0 pointer-events-none " +
+              (walletStore.requiredNetwork.name === "BSC"
+                ? "right-7"
+                : "right-0")
+            }
+          >
             <div className="absolute-center w-full">
               <Chevron className="transform rotate-90 fill-current text-white" />
             </div>
@@ -80,7 +87,7 @@ export default function ConnectButton() {
           </button>
           <p
             className={
-              "text-white text-xs max-w-xs pl-5 sm:text-sm sm:text-center " +
+              "text-white text-xs max-w-xs pl-3 sm:text-sm sm:text-center " +
               (walletStore.networkWarning ? "block" : "hidden")
             }
           >

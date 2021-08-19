@@ -43,87 +43,88 @@ export default function Bridge() {
   useEffect(() => {}, [selectedAsset, fromChain, toChain]);
 
   return (
-    <div className="container mx-auto px-4 pb-10">
+    <>
       <div className="mt-4 px-4 flex">
         <div className="mx-auto bg-white shadow-sm px-3 py-2 rounded">
           Using Smart Contracts, Tokens, and Crypto is always a risk. DYOR
           before investing.
         </div>
       </div>
-
-      <div className="mt-10">
-        <h1 className="text-body text-4xl font-bold">Cross-Chain Bridge</h1>
-      </div>
-      <div className="p-6 mt-4 bg-white rounded-lg shadow-sm">
-        <div className="mb-4">
-          <div className="font-semibold">Move</div>
-          <SelectView
-            options={assets.map((value) => {
-              return <option value={value.name}>{value.uiName}</option>;
-            })}
-            value={selectedAsset.name}
-            onChange={(value) => {
-              const asset = assets.find((el) => {
-                return el.name === value;
-              });
-              if (asset) {
-                setSelectedAsset(asset);
-              }
-            }}
-          />
+      <div className="container mx-auto px-4 pb-10">
+        <div className="mt-10">
+          <h1 className="text-body text-4xl font-bold">Cross-Chain Bridge</h1>
         </div>
-        <div className="space-y-4 sm:flex sm:space-y-0 sm:space-x-6">
-          <div>
-            <div className="font-semibold">From</div>
+        <div className="p-6 mt-4 bg-white rounded-lg shadow-sm">
+          <div className="mb-4">
+            <div className="font-semibold">Move</div>
             <SelectView
-              options={fromChainOptions.map((value) => {
+              options={assets.map((value) => {
                 return <option value={value.name}>{value.uiName}</option>;
               })}
-              value={fromChain.name}
+              value={selectedAsset.name}
               onChange={(value) => {
-                const chain = chains.find((el) => {
+                const asset = assets.find((el) => {
                   return el.name === value;
                 });
-                if (chain) {
-                  setFromChain(chain);
+                if (asset) {
+                  setSelectedAsset(asset);
                 }
               }}
             />
           </div>
+          <div className="space-y-4 sm:flex sm:space-y-0 sm:space-x-6">
+            <div>
+              <div className="font-semibold">From</div>
+              <SelectView
+                options={fromChainOptions.map((value) => {
+                  return <option value={value.name}>{value.uiName}</option>;
+                })}
+                value={fromChain.name}
+                onChange={(value) => {
+                  const chain = chains.find((el) => {
+                    return el.name === value;
+                  });
+                  if (chain) {
+                    setFromChain(chain);
+                  }
+                }}
+              />
+            </div>
 
-          <div>
-            <div className="font-semibold">To</div>
-            <SelectView
-              options={toChainOptions.map((value) => {
-                return <option value={value.name}>{value.uiName}</option>;
-              })}
-              value={toChain.name}
-              onChange={(value) => {
-                const chain = chains.find((el) => {
-                  return el.name === value;
-                });
-                if (chain) {
-                  setToChain(chain);
-                }
-              }}
-            />
+            <div>
+              <div className="font-semibold">To</div>
+              <SelectView
+                options={toChainOptions.map((value) => {
+                  return <option value={value.name}>{value.uiName}</option>;
+                })}
+                value={toChain.name}
+                onChange={(value) => {
+                  const chain = chains.find((el) => {
+                    return el.name === value;
+                  });
+                  if (chain) {
+                    setToChain(chain);
+                  }
+                }}
+              />
+            </div>
           </div>
         </div>
+
+        {selectedAsset.name === "kangal" &&
+          (fromChain.name === "bsc" || fromChain.name === "eth") &&
+          (toChain.name === "bsc" || toChain.name === "eth") && (
+            <BurgerSwapInfo from={fromChain.uiName} to={toChain.uiName} />
+          )}
+
+        {selectedAsset.name === "kangal" &&
+          (fromChain.name === "polygon" || toChain.name === "polygon") && (
+            <AnySwapInfo from={fromChain.uiName} to={toChain.uiName} />
+          )}
+
+        {selectedAsset.name === "steak" && <SteakBridgeInfo />}
       </div>
-
-      {selectedAsset.name === "kangal" &&
-        (fromChain.name === "bsc" || fromChain.name === "eth") &&
-        (toChain.name === "bsc" || toChain.name === "eth") && (
-          <BurgerSwapInfo from={fromChain.uiName} to={toChain.uiName} />
-        )}
-
-      {selectedAsset.name === "kangal" &&
-        (fromChain.name === "polygon" || toChain.name === "polygon") && (
-          <AnySwapInfo from={fromChain.uiName} to={toChain.uiName} />
-        )}
-
-      {selectedAsset.name === "steak" && <SteakBridgeInfo />}
-    </div>
+    </>
   );
 }
 
