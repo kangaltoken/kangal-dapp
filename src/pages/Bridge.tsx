@@ -43,7 +43,7 @@ export default function Bridge() {
   useEffect(() => {}, [selectedAsset, fromChain, toChain]);
 
   return (
-    <div className="container mx-auto px-4">
+    <div className="container mx-auto px-4 pb-10">
       <div className="mt-4 px-4 flex">
         <div className="mx-auto bg-white shadow-sm px-3 py-2 rounded">
           Using Smart Contracts, Tokens, and Crypto is always a risk. DYOR
