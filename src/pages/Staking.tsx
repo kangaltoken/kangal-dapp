@@ -181,15 +181,11 @@ function Staking() {
         <div className="mt-10 sm:mt-20">
           <h1 className="text-body text-4xl font-bold">Top $TEAKers</h1>
         </div>
-        {walletStore.requiredNetwork.name === "BSC" && (
-          <StakersList userAddress={walletStore.address ?? ""} />
-        )}
 
-        {walletStore.requiredNetwork.name === "Polygon" && (
-          <div className="p-6 mt-4 bg-white rounded-lg shadow-sm">
-            <p>Coming soon!</p>
-          </div>
-        )}
+        <StakersList
+          userAddress={walletStore.address ?? ""}
+          requiredNetwork={walletStore.requiredNetwork.name}
+        />
       </div>
     </div>
   );
