@@ -1,23 +1,23 @@
 import { ethers } from "ethers";
 import { useState } from "react";
-import useStakeStore, { StakeStore } from "../store/stakeStore";
+import useTokenStore, { TokenStore } from "../store/tokenStore";
 import useWalletStore from "../store/walletStore";
 
 export default function DepositTab() {
-  const stakeStore = useStakeStore();
   const walletStore = useWalletStore();
+  const tokenStore = useTokenStore();
 
   const [depositAmount, setDepositAmount] = useState("");
 
   const approve = () => {
     if (walletStore.provider && walletStore.address) {
-      stakeStore.approve(walletStore.provider);
+      tokenStore.approveKangal(walletStore.provider);
     }
   };
 
   const deposit = async (amount: string) => {
     if (walletStore.provider && walletStore.address) {
-      stakeStore.deposit(amount, walletStore.provider);
+      tokenStore.depositKangal(amount, walletStore.provider);
     }
   };
 
@@ -44,9 +44,9 @@ export default function DepositTab() {
           <button
             className="mt-5 ml-2"
             onClick={() => {
-              if (stakeStore.kangalInfo.userBalance) {
+              if (tokenStore.kangalInfo.userBalance) {
                 const amount = ethers.utils
-                  .formatUnits(stakeStore.kangalInfo.userBalance)
+                  .formatUnits(tokenStore.kangalInfo.userBalance)
                   .replace(",", ".");
                 setDepositAmount(amount);
               }
@@ -60,11 +60,11 @@ export default function DepositTab() {
       <button
         className="flex mx-auto mt-6 relative"
         onClick={() => {
-          if (stakeStore.kangalInfo?.userBalance?.eq(0)) {
+          if (tokenStore.kangalInfo?.userBalance?.eq(0)) {
             return;
           }
-          if (stakeStore.poolInfo.hasAllowance !== null) {
-            stakeStore.poolInfo.hasAllowance
+          if (tokenStore.poolInfo.hasAllowance !== null) {
+            tokenStore.poolInfo.hasAllowance
               ? deposit(depositAmount)
               : approve();
           }
@@ -72,14 +72,14 @@ export default function DepositTab() {
       >
         <div className="absolute w-full h-full bg-orange rounded-md opacity-10" />
         <p className="text-orange px-5 py-1 font-semibold tracking-wider">
-          {makeDepositButtonText(stakeStore)}
+          {makeDepositButtonText(tokenStore)}
         </p>
       </button>
     </div>
   );
 }
 
-function makeDepositButtonText(stakeInfo: StakeStore): string {
+function makeDepositButtonText(stakeInfo: TokenStore): string {
   if (stakeInfo.kangalInfo.userBalance?.eq(0)) {
     return "NO BALANCE";
   }

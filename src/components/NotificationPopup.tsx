@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 
-import { Tx } from "../store/stakeStore";
+import { Tx } from "../store/tokenStore";
 
 import { ReactComponent as Spinner } from "../assets/images/spinner.svg";
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-import useStakeStore from "../store/stakeStore";
+import useTokenStore from "../store/tokenStore";
 import ConnectButton from "./ConnectButton";
 import NotificationPopup from "./NotificationPopup";
 
@@ -10,12 +10,12 @@ import { ReactComponent as Logotype } from "../assets/images/kangal-logotype.svg
 
 export default function Navigation() {
   const location = useLocation();
-  const stakeStore = useStakeStore();
+  const tokenStore = useTokenStore();
   const [playState, setPlayState] = useState(false);
 
   useEffect(() => {
-    stakeStore.pendingTx ? setPlayState(true) : setPlayState(false);
-  }, [stakeStore.pendingTx]);
+    tokenStore.pendingTx ? setPlayState(true) : setPlayState(false);
+  }, [tokenStore.pendingTx]);
 
   return (
     <div>
@@ -90,7 +90,7 @@ export default function Navigation() {
       <div className="sticky top-0 z-10">
         <NotificationPopup
           playState={playState}
-          transaction={stakeStore.pendingTx}
+          transaction={tokenStore.pendingTx}
         />
       </div>
     </div>

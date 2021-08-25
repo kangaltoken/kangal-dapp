@@ -4,9 +4,12 @@ import immerMiddleware from "./immerMiddleware";
 
 import { ERC20__factory } from "../assets/typechain/factories/ERC20__factory";
 import { StakingContract__factory } from "../assets/typechain/factories/StakingContract__factory";
+import { BridgeBSC__factory } from "../assets/typechain/factories/BridgeBSC__factory";
 
 import ContractAddresses from "../constants/contracts";
 import useWalletStore, { Network } from "./walletStore";
+
+const operatorFee = ethers.utils.parseEther("0.0002");
 
 const pancakePairAbi = [
   "function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast)",
@@ -17,6 +20,7 @@ export enum TxType {
   deposit = "DEPOSIT",
   withdraw = "WITHDRAW",
   rewardClaim = "REWARD CLAIM",
+  bridge = "BRIDGE",
 }
 
 export type Tx = {
@@ -44,25 +48,36 @@ type PoolInfo = {
   totalLockedValue: number | null;
 };
 
-export type StakeStore = {
+type BridgeInfo = {
+  address: string | null;
+  hasAllowance: boolean | null;
+};
+
+export type TokenStore = {
   pendingTx: Tx | null;
   kangalInfo: TokenInfo;
   steakInfo: TokenInfo;
   poolInfo: PoolInfo;
+  bridgeInfo: BridgeInfo;
   kangalPairAddress: string;
   stablePairAddress: string;
   fetchInfo: (
     provider: ethers.providers.Web3Provider,
     userAddress: string
   ) => Promise<void>;
-  approve: (provider: ethers.providers.Web3Provider) => Promise<void>;
-  deposit: (
+  approveKangal: (provider: ethers.providers.Web3Provider) => Promise<void>;
+  depositKangal: (
     amount: string,
     provider: ethers.providers.Web3Provider
   ) => Promise<void>;
-  claim: (provider: ethers.providers.Web3Provider) => Promise<void>;
-  withdraw: (provider: ethers.providers.Web3Provider) => Promise<void>;
+  claimSteak: (provider: ethers.providers.Web3Provider) => Promise<void>;
+  withdrawStake: (provider: ethers.providers.Web3Provider) => Promise<void>;
   onNetworkChange: (networkName: string) => Promise<void>;
+  approveSteak: (provider: ethers.providers.Web3Provider) => Promise<void>;
+  bridgeSteak: (
+    amount: string,
+    provider: ethers.providers.Web3Provider
+  ) => Promise<void>;
 };
 
 // Get initial contract base
@@ -72,7 +87,7 @@ if (savedItem === "Polygon") {
   initialContractBase = ContractAddresses.polygonMainnet;
 }
 
-const useStakeStore = create<StakeStore>(
+const useStakeStore = create<TokenStore>(
   immerMiddleware((set, get) => ({
     pendingTx: null,
     kangalInfo: {
@@ -97,6 +112,10 @@ const useStakeStore = create<StakeStore>(
       pendingEarnings: null,
       totalLockedValue: null,
     },
+    bridgeInfo: {
+      address: initialContractBase.bridge,
+      hasAllowance: null,
+    },
     kangalPairAddress: initialContractBase.kangalPair,
     stablePairAddress: initialContractBase.stablePair,
     fetchInfo: async (provider, address) => {
@@ -112,6 +131,11 @@ const useStakeStore = create<StakeStore>(
         );
 
         const steak = ERC20__factory.connect(get().steakInfo.address, provider);
+        const bridgeAddress = get().bridgeInfo.address;
+        let steakAllowance: BigNumber | null;
+        if (bridgeAddress) {
+          steakAllowance = await steak.allowance(address, bridgeAddress);
+        }
         const sBalance = await steak.balanceOf(address);
         const sTotalSupply = await steak.totalSupply();
 
@@ -187,12 +211,18 @@ const useStakeStore = create<StakeStore>(
           state.poolInfo.stakedBalance = stakedBalance;
           state.poolInfo.pendingEarnings = pendingEarnings;
           state.poolInfo.totalLockedValue = totalLockedValue;
+
+          if (steakAllowance) {
+            state.bridgeInfo.hasAllowance = steakAllowance.eq(0)
+              ? false
+              : kAllowance.gte(kBalance);
+          }
         });
       } catch (error) {
         console.log(error);
       }
     },
-    approve: async (provider) => {
+    approveKangal: async (provider) => {
       const kangal = ERC20__factory.connect(
         get().kangalInfo.address,
         provider.getSigner()
@@ -224,7 +254,7 @@ const useStakeStore = create<StakeStore>(
         console.log(error);
       }
     },
-    deposit: async (amount, provider) => {
+    depositKangal: async (amount, provider) => {
       const stakingContract = StakingContract__factory.connect(
         get().poolInfo.address,
         provider.getSigner()
@@ -248,7 +278,7 @@ const useStakeStore = create<StakeStore>(
 
       get().fetchInfo(provider, receipt.from);
     },
-    claim: async (provider) => {
+    claimSteak: async (provider) => {
       const stakingContract = StakingContract__factory.connect(
         get().poolInfo.address,
         provider.getSigner()
@@ -272,7 +302,7 @@ const useStakeStore = create<StakeStore>(
 
       get().fetchInfo(provider, receipt.from);
     },
-    withdraw: async (provider) => {
+    withdrawStake: async (provider) => {
       const stakingContract = StakingContract__factory.connect(
         get().poolInfo.address,
         provider.getSigner()
@@ -326,9 +356,86 @@ const useStakeStore = create<StakeStore>(
           pendingEarnings: null,
           totalLockedValue: null,
         };
+        state.bridgeInfo = {
+          address: contractBase.bridge,
+          hasAllowance: null,
+        };
         state.kangalPairAddress = contractBase.kangalPair;
         state.stablePairAddress = contractBase.stablePair;
       });
+    },
+    approveSteak: async (provider) => {
+      const bridgeAddress = get().bridgeInfo.address;
+
+      if (!bridgeAddress) {
+        return;
+      }
+
+      const steak = ERC20__factory.connect(
+        get().steakInfo.address,
+        provider.getSigner()
+      );
+
+      try {
+        const transaction = await steak.approve(
+          bridgeAddress,
+          ethers.constants.MaxUint256
+        );
+
+        set((state) => {
+          state.pendingTx = makeTx(
+            TxType.approval,
+            transaction.hash,
+            useWalletStore.getState().requiredNetwork
+          );
+        });
+
+        await transaction.wait();
+
+        set((state) => {
+          state.pendingTx = null;
+          state.bridgeInfo.hasAllowance = true;
+        });
+      } catch (error) {
+        set((state) => {
+          state.pendingTx = null;
+        });
+        console.log(error);
+      }
+    },
+    bridgeSteak: async (amount, provider) => {
+      const bridgeAddress = get().bridgeInfo.address;
+      if (!bridgeAddress) {
+        return;
+      }
+
+      const bridgeContract = BridgeBSC__factory.connect(
+        bridgeAddress,
+        provider.getSigner()
+      );
+      let parsedAmount = ethers.utils.parseUnits(amount);
+      const transaction = await bridgeContract.makeBridgeRequestToPolygon(
+        parsedAmount,
+        {
+          value: operatorFee,
+        }
+      );
+
+      set((state) => {
+        state.pendingTx = makeTx(
+          TxType.bridge,
+          transaction.hash,
+          useWalletStore.getState().requiredNetwork
+        );
+      });
+
+      const receipt = await transaction.wait();
+
+      set((state) => {
+        state.pendingTx = null;
+      });
+
+      get().fetchInfo(provider, receipt.from);
     },
   }))
 );

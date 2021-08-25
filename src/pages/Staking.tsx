@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
-import { BigNumber } from "ethers";
 import ReactTooltip from "react-tooltip";
 
 import useWalletStore from "../store/walletStore";
-import useStakeStore from "../store/stakeStore";
-import { formatAmount } from "../utils/Formatters";
+import useTokenStore from "../store/tokenStore";
+import { formatAmount, formatUnits } from "../utils/Formatters";
 
 import InfoBox from "../components/InfoBox";
 import StakeAndEarnInfo from "../components/StakeAndEarnInfo";
@@ -23,13 +22,13 @@ import { ReactComponent as GreenCircle } from "../assets/images/green-circle.svg
 
 function Staking() {
   const walletStore = useWalletStore();
-  const stakeStore = useStakeStore();
+  const tokenStore = useTokenStore();
 
   const [depositTabActive, setDepositTabActive] = useState(true);
 
   useEffect(() => {
     if (walletStore.provider && walletStore.address) {
-      stakeStore.fetchInfo(walletStore.provider, walletStore.address);
+      tokenStore.fetchInfo(walletStore.provider, walletStore.address);
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -38,10 +37,10 @@ function Staking() {
   const claim = () => {
     if (walletStore.provider) {
       if (
-        !stakeStore.poolInfo.pendingEarnings?.eq(0) &&
-        stakeStore.poolInfo.timeLimitPassed
+        !tokenStore.poolInfo.pendingEarnings?.eq(0) &&
+        tokenStore.poolInfo.timeLimitPassed
       ) {
-        stakeStore.claim(walletStore.provider);
+        tokenStore.claimSteak(walletStore.provider);
       }
     }
   };
@@ -65,19 +64,19 @@ function Staking() {
         <div className="flex-col space-y-4 sm:flex sm:flex-row sm:space-y-0 sm:space-x-8 mt-6">
           <InfoBox
             title="KANGAL BALANCE"
-            amount={formatUnits(stakeStore.kangalInfo.userBalance)}
+            amount={formatUnits(tokenStore.kangalInfo.userBalance)}
             iconBackground={<BlueCircle />}
             iconForeground={<Logo />}
           />
           <InfoBox
             title="STAKED KANGAL BALANCE"
-            amount={formatUnits(stakeStore.poolInfo.stakedBalance)}
+            amount={formatUnits(tokenStore.poolInfo.stakedBalance)}
             iconBackground={<GreenCircle />}
             iconForeground={<KangalSteak />}
           />
           <InfoBox
             title="$TEAK BALANCE"
-            amount={formatUnits(stakeStore.steakInfo.userBalance)}
+            amount={formatUnits(tokenStore.steakInfo.userBalance)}
             iconBackground={<OrangeCircle />}
             iconForeground={<SteakLogo />}
           />
@@ -91,19 +90,19 @@ function Staking() {
         <div className="flex-col space-y-4 sm:flex sm:flex-row sm:space-y-0 sm:space-x-8 mt-6">
           <InfoBox
             title="TOTAL KANGAL STAKED"
-            amount={formatUnits(stakeStore.poolInfo.totalStakedBalance)}
+            amount={formatUnits(tokenStore.poolInfo.totalStakedBalance)}
             iconBackground={<BlueCircle />}
             iconForeground={<Logo />}
           />
           <InfoBox
             title="TOTAL VALUE LOCKED"
-            amount={formatTLV(stakeStore.poolInfo.totalLockedValue)}
+            amount={formatTLV(tokenStore.poolInfo.totalLockedValue)}
             iconBackground={<GreenCircle />}
             iconForeground={<DollarIcon />}
           />
           <InfoBox
             title="TOTAL $TEAK CLAIMED"
-            amount={formatUnits(stakeStore.steakInfo.totalSupply)}
+            amount={formatUnits(tokenStore.steakInfo.totalSupply)}
             iconBackground={<OrangeCircle />}
             iconForeground={<SteakLogo />}
           />
@@ -124,7 +123,7 @@ function Staking() {
                 </p>
                 <p className="flex mt-1 place-content-center font-semibold text-body sm:place-content-start">
                   <Logo className="w-5 h-7 mr-1 -mt-1" />{" "}
-                  {formatUnits(stakeStore.poolInfo.stakedBalance, 2, false)}{" "}
+                  {formatUnits(tokenStore.poolInfo.stakedBalance, 2, false)}{" "}
                 </p>
               </div>
               <div>
@@ -133,11 +132,11 @@ function Staking() {
                 </p>
                 <p className="flex mt-1 place-content-center font-semibold text-body sm:place-content-start">
                   <SteakLogo className="w-5 h-7 mr-1 -mt-1" />{" "}
-                  {formatUnits(stakeStore.poolInfo.pendingEarnings)}
+                  {formatUnits(tokenStore.poolInfo.pendingEarnings)}
                 </p>
               </div>
               <div className="flex justify-center sm:justify-start mt-4 relative">
-                {!stakeStore.poolInfo.timeLimitPassed && (
+                {!tokenStore.poolInfo.timeLimitPassed && (
                   <div
                     data-tip="You will be able to claim rewards <br/>
                     once you've staked longer than the minimum stake time <br/>
@@ -189,17 +188,6 @@ function Staking() {
       </div>
     </div>
   );
-}
-
-function formatUnits(
-  units: BigNumber | null,
-  maximumFractionDigits: number = 2,
-  compact: boolean = true
-): string {
-  if (units) {
-    return formatAmount(units, maximumFractionDigits, compact);
-  }
-  return "...";
 }
 
 function formatTLV(number: number | null): string {

@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import Web3Modal from "web3modal";
 import create from "zustand";
 
-import useStakeStore from "../store/stakeStore";
+import useStakeStore from "./tokenStore";
 
 export type Network = {
   name: string;
