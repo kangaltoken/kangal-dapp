@@ -185,7 +185,7 @@ const polygonNetworkInfo = {
         symbol: "MATIC",
         decimals: 18,
       },
-      rpcUrls: ["https://rpc-mainnet.matic.quiknode.pro"],
+      rpcUrls: ["https://rpc-mainnet.matic.network"],
       blockExplorerUrls: ["https://polygonscan.com"],
     },
   ],

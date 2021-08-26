@@ -9,7 +9,7 @@ export default async function steakBalancePolygon(
   userAddress: string
 ): Promise<BigNumber> {
   const polygonProvider = new ethers.providers.JsonRpcProvider(
-    "https://rpc-mainnet.matic.quiknode.pro"
+    "https://rpc-mainnet.matic.network"
   );
   const steak = ERC20__factory.connect(
     Addresses.polygonMainnet.teak,

@@ -34,8 +34,12 @@ export default function SteakBridge() {
     const address = walletStore.address;
 
     async function updateSteakPolygonBalance(address: string) {
-      const balance = await steakBalancePolygon(address);
-      setPolygonStakeBalance(balance);
+      try {
+        const balance = await steakBalancePolygon(address);
+        setPolygonStakeBalance(balance);
+      } catch (error) {
+        console.log(error);
+      }
     }
 
     const interval = setInterval(

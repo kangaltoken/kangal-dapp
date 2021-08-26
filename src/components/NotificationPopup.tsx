@@ -34,11 +34,8 @@ export default function NotificationPopup(props: INotificationPopup) {
   }, [props]);
 
   return (
-    <div className="absolute right-0 w-80 h-0">
-      <div
-        id="notification-card"
-        className="top-2 relative z-10 sm:max-w-xs sm:ml-auto opacity-0"
-      >
+    <div className="absolute w-full h-0 z-50">
+      <div id="notification-card" className="fixed top-0 right-0 opacity-0">
         <div className="p-2">
           <div className="flex items-center px-6 py-4 rounded shadow-xl bg-white">
             <Spinner className="animate-spin mr-4 h-5 w-5 text-body" />
