@@ -27,7 +27,7 @@ const addresses: Record<string, KangalAddresses> = {
   polygonMainnet: {
     kangal: "0x34f380a4e3389e99c0369264453523bbe5af7fab",
     kangalPair: "0xFA71ECaC520c2074B4dD047D3696c0aeD1b7c3E2", // KANGAL / wETH
-    stablePair: "0xE62Ec2e799305E0D367b0Cc3ee2CdA135bF89816", // wETH / USDC
+    stablePair: "0x34965ba0ac2451A34a0471F04CCa3F990b8dea27", // wETH / USDC
     teak: "0x3d50f9543CdB83ec867F491787C65d14631ba50F",
     staking: "0x68a37C1cbBD49f693029F5749CA0b1D7c6d85A74",
     bridge: null,

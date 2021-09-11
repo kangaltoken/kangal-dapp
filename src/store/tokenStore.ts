@@ -63,7 +63,8 @@ export type TokenStore = {
   stablePairAddress: string;
   fetchInfo: (
     provider: ethers.providers.Web3Provider,
-    userAddress: string
+    userAddress: string,
+    retry?: number
   ) => Promise<void>;
   approveKangal: (provider: ethers.providers.Web3Provider) => Promise<void>;
   depositKangal: (
@@ -118,7 +119,7 @@ const useStakeStore = create<TokenStore>(
     },
     kangalPairAddress: initialContractBase.kangalPair,
     stablePairAddress: initialContractBase.stablePair,
-    fetchInfo: async (provider, address) => {
+    fetchInfo: async (provider, address, retry) => {
       try {
         const kangal = ERC20__factory.connect(
           get().kangalInfo.address,
@@ -171,14 +172,18 @@ const useStakeStore = create<TokenStore>(
         const kangalPairReserves = await kangalPair.getReserves();
         const stablePairReserves = await stablePair.getReserves();
 
+        const networkName = useWalletStore.getState().requiredNetwork.name;
+
         const kangalPairKangal = Number(
-          ethers.utils.formatUnits(kangalPairReserves[0])
+          ethers.utils.formatUnits(
+            kangalPairReserves[networkName === "BSC" ? 1 : 0]
+          )
         );
         const kangalPairOther = Number(
-          ethers.utils.formatUnits(kangalPairReserves[1])
+          ethers.utils.formatUnits(
+            kangalPairReserves[networkName === "BSC" ? 0 : 1]
+          )
         );
-
-        const networkName = useWalletStore.getState().requiredNetwork.name;
 
         const stablePairToken = Number(
           ethers.utils.formatUnits(
@@ -187,12 +192,15 @@ const useStakeStore = create<TokenStore>(
         );
         const stablePairUSD = Number(
           ethers.utils.formatUnits(
-            stablePairReserves[networkName === "BSC" ? 1 : 2]
+            stablePairReserves[networkName === "BSC" ? 1 : 0],
+            networkName === "BSC" ? 18 : 6
           )
         );
-        const pairedTokenPrice = stablePairUSD / stablePairToken;
+
+        const pairedTokenPrice = stablePairUSD / stablePairToken; // BNB or ETH price
         const kangalPrice =
-          (kangalPairKangal / kangalPairOther) * pairedTokenPrice;
+          (kangalPairOther * pairedTokenPrice) / kangalPairKangal;
+
         const totalLockedValue =
           kangalPrice * Number(ethers.utils.formatUnits(totalStakedBalance));
 
@@ -219,6 +227,10 @@ const useStakeStore = create<TokenStore>(
           }
         });
       } catch (error) {
+        let retryCount = retry ?? 0;
+        if (retryCount <= 3) {
+          get().fetchInfo(provider, address, retryCount++);
+        }
         console.log(error);
       }
     },
