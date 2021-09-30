@@ -19,14 +19,14 @@ export default function Navigation() {
 
   return (
     <div>
-      <div className="flex relative z-10 h-20 px-4 sm:px-10 items-center bg-darkBlue">
+      <div className="flex relative z-10 h-20 px-4 sm:px-10 items-center bg-black">
         <div className="flex h-8">
           <Logo className="w-8 h-8" />
           <Logotype className="hidden sm:block ml-2 mt-2" />
         </div>
-        <nav className="hidden md:block absolute-center">
+        <nav className="hidden lg:block absolute-center">
           <ul className="flex justify-center space-x-4">
-            <li className="">
+            <li>
               <Link to="/">
                 <div
                   className={
@@ -38,7 +38,7 @@ export default function Navigation() {
                 </div>
               </Link>
             </li>
-            <li className="">
+            <li>
               <Link to="/bridge">
                 <div
                   className={
@@ -50,6 +50,18 @@ export default function Navigation() {
                 </div>
               </Link>
             </li>
+            <li>
+              <Link to="/nftdrop">
+                <div
+                  className={
+                    "text-white py-2 px-6 rounded-2xl font-semibold tracking-wide text-xl " +
+                    (location.pathname === "/nftdrop" ? "glow" : "")
+                  }
+                >
+                  NFT Drop
+                </div>
+              </Link>
+            </li>
           </ul>
         </nav>
         <div className="ml-auto">
@@ -58,9 +70,9 @@ export default function Navigation() {
       </div>
 
       {/* Nav on mobile */}
-      <nav className="md:hidden flex-1 bg-darkBlue overflow-hidden">
+      <nav className="lg:hidden flex-1 bg-black overflow-hidden">
         <ul className="flex justify-center space-x-4">
-          <li className="">
+          <li>
             <Link to="/">
               <div
                 className={
@@ -72,7 +84,7 @@ export default function Navigation() {
               </div>
             </Link>
           </li>
-          <li className="">
+          <li>
             <Link to="/bridge">
               <div
                 className={
@@ -81,6 +93,18 @@ export default function Navigation() {
                 }
               >
                 Bridge
+              </div>
+            </Link>
+          </li>
+          <li>
+            <Link to="/nftdrop">
+              <div
+                className={
+                  "text-white py-2 px-6 rounded-2xl font-semibold tracking-wide text-xl " +
+                  (location.pathname === "/nftdrop" ? "glow" : "")
+                }
+              >
+                NFT Drop
               </div>
             </Link>
           </li>
