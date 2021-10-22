@@ -2,9 +2,9 @@ import { BigNumber, ethers } from "ethers";
 import create from "zustand";
 import immerMiddleware from "./immerMiddleware";
 
-import { ERC20__factory } from "../assets/typechain/factories/ERC20__factory";
-import { StakingContract__factory } from "../assets/typechain/factories/StakingContract__factory";
-import { BridgeBSC__factory } from "../assets/typechain/factories/BridgeBSC__factory";
+import { ERC20__factory } from "../assets/typechain/stake/factories/ERC20__factory";
+import { StakingContract__factory } from "../assets/typechain/stake/factories/StakingContract__factory";
+import { BridgeBSC__factory } from "../assets/typechain/stake/factories/BridgeBSC__factory";
 
 import ContractAddresses from "../constants/contracts";
 import useWalletStore, { Network } from "./walletStore";
@@ -15,16 +15,18 @@ const pancakePairAbi = [
   "function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast)",
 ];
 
-export enum TxType {
+export enum TxnType {
   approval = "APPROVAL",
   deposit = "DEPOSIT",
   withdraw = "WITHDRAW",
   rewardClaim = "REWARD CLAIM",
   bridge = "BRIDGE",
+  newBid = "NEW BID",
+  claim = "CLAIM",
 }
 
-export type Tx = {
-  type: TxType;
+export type Txn = {
+  type: TxnType;
   hash: string;
   networkExplorerName: string;
   networkExplorerUrl: string;
@@ -54,7 +56,7 @@ type BridgeInfo = {
 };
 
 export type TokenStore = {
-  pendingTx: Tx | null;
+  pendingTx: Txn | null;
   kangalInfo: TokenInfo;
   steakInfo: TokenInfo;
   poolInfo: PoolInfo;
@@ -246,8 +248,8 @@ const useStakeStore = create<TokenStore>(
         );
 
         set((state) => {
-          state.pendingTx = makeTx(
-            TxType.approval,
+          state.pendingTx = makeTxn(
+            TxnType.approval,
             transaction.hash,
             useWalletStore.getState().requiredNetwork
           );
@@ -275,8 +277,8 @@ const useStakeStore = create<TokenStore>(
       const transaction = await stakingContract.deposit(parsedAmount);
 
       set((state) => {
-        state.pendingTx = makeTx(
-          TxType.deposit,
+        state.pendingTx = makeTxn(
+          TxnType.deposit,
           transaction.hash,
           useWalletStore.getState().requiredNetwork
         );
@@ -299,8 +301,8 @@ const useStakeStore = create<TokenStore>(
       const transaction = await stakingContract.claimRewards();
 
       set((state) => {
-        state.pendingTx = makeTx(
-          TxType.rewardClaim,
+        state.pendingTx = makeTxn(
+          TxnType.rewardClaim,
           transaction.hash,
           useWalletStore.getState().requiredNetwork
         );
@@ -323,8 +325,8 @@ const useStakeStore = create<TokenStore>(
       const transaction = await stakingContract.withdraw();
 
       set((state) => {
-        state.pendingTx = makeTx(
-          TxType.withdraw,
+        state.pendingTx = makeTxn(
+          TxnType.withdraw,
           transaction.hash,
           useWalletStore.getState().requiredNetwork
         );
@@ -395,8 +397,8 @@ const useStakeStore = create<TokenStore>(
         );
 
         set((state) => {
-          state.pendingTx = makeTx(
-            TxType.approval,
+          state.pendingTx = makeTxn(
+            TxnType.approval,
             transaction.hash,
             useWalletStore.getState().requiredNetwork
           );
@@ -434,8 +436,8 @@ const useStakeStore = create<TokenStore>(
       );
 
       set((state) => {
-        state.pendingTx = makeTx(
-          TxType.bridge,
+        state.pendingTx = makeTxn(
+          TxnType.bridge,
           transaction.hash,
           useWalletStore.getState().requiredNetwork
         );
@@ -452,11 +454,11 @@ const useStakeStore = create<TokenStore>(
   }))
 );
 
-function makeTx(
-  type: TxType,
+export function makeTxn(
+  type: TxnType,
   transactionHash: string,
   requiredNetwork: Network
-): Tx {
+): Txn {
   return {
     type: type,
     hash: transactionHash,

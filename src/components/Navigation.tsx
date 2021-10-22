@@ -7,15 +7,19 @@ import NotificationPopup from "./NotificationPopup";
 
 import { ReactComponent as Logo } from "../assets/images/kangal-logo.svg";
 import { ReactComponent as Logotype } from "../assets/images/kangal-logotype.svg";
+import useAuctionStore from "../store/auctionStore";
 
 export default function Navigation() {
   const location = useLocation();
   const tokenStore = useTokenStore();
+  const auctionStore = useAuctionStore();
   const [playState, setPlayState] = useState(false);
 
   useEffect(() => {
-    tokenStore.pendingTx ? setPlayState(true) : setPlayState(false);
-  }, [tokenStore.pendingTx]);
+    tokenStore.pendingTx ?? auctionStore.pendingTx
+      ? setPlayState(true)
+      : setPlayState(false);
+  }, [tokenStore.pendingTx, auctionStore.pendingTx]);
 
   return (
     <div>
@@ -114,7 +118,7 @@ export default function Navigation() {
       <div className="sticky top-0 z-10">
         <NotificationPopup
           playState={playState}
-          transaction={tokenStore.pendingTx}
+          transaction={tokenStore.pendingTx ?? auctionStore.pendingTx}
         />
       </div>
     </div>

@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 
-import { Tx } from "../store/tokenStore";
+import { Txn } from "../store/tokenStore";
 
 import { ReactComponent as Spinner } from "../assets/images/spinner.svg";
 
 interface INotificationPopup {
   playState: boolean;
-  transaction: Tx | null;
+  transaction: Txn | null;
 }
 
 export default function NotificationPopup(props: INotificationPopup) {
-  const [tx, setTx] = useState<Tx>();
+  const [tx, setTx] = useState<Txn>();
 
   const tl = useRef<gsap.core.Timeline>();
   useEffect(() => {
@@ -23,6 +23,7 @@ export default function NotificationPopup(props: INotificationPopup) {
       })
       .to("#notification-card", { autoAlpha: 1, x: "0" });
   }, []);
+
   useEffect(() => {
     props.playState ? tl.current?.play() : tl.current?.reverse();
   }, [props.playState]);

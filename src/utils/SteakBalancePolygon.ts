@@ -1,6 +1,6 @@
 import { ethers, BigNumber } from "ethers";
 
-import { ERC20__factory } from "../assets/typechain/factories/ERC20__factory";
+import { ERC20__factory } from "../assets/typechain/stake/factories/ERC20__factory";
 
 import Addresses from "../constants/contracts";
 
