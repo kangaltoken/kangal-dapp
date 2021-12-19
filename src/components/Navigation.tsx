@@ -55,11 +55,11 @@ export default function Navigation() {
               </Link>
             </li>
             <li>
-              <Link to="/nftdrop">
+              <Link to="/nftdrop/kang-gang/2">
                 <div
                   className={
                     "text-white py-2 px-6 rounded-2xl font-semibold tracking-wide text-xl " +
-                    (location.pathname === "/nftdrop" ? "glow" : "")
+                    (location.pathname.includes("/nftdrop") ? "glow" : "")
                   }
                 >
                   NFT Drop
@@ -105,7 +105,7 @@ export default function Navigation() {
               <div
                 className={
                   "text-white py-2 px-6 rounded-2xl font-semibold tracking-wide text-xl " +
-                  (location.pathname === "/nftdrop" ? "glow" : "")
+                  (location.pathname.includes("/nftdrop") ? "glow" : "")
                 }
               >
                 NFT Drop

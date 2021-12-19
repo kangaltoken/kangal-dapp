@@ -1,13 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import ReactPlayer from "react-player/lazy";
-import useAuctionStore, { AuctionStore } from "../store/auctionStore";
+import useAuctionStore, {
+  AuctionStore,
+  CollectionName,
+} from "../store/auctionStore";
 import useWalletStore from "../store/walletStore";
 import { formatAmount, shrinkAddress } from "../utils/Formatters";
 import ReactTooltip from "react-tooltip";
 import useInterval from "../utils/useInterval";
-import { ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
+import { useLocation } from "react-router-dom";
 
 export default function NFTDrop() {
+  const location = useLocation();
+  const collectionName = location.pathname.split("/")[2] as CollectionName;
+  const nftId = location.pathname.split("/")[3];
+
   const auctionStore = useAuctionStore();
   const walletStore = useWalletStore();
 
@@ -29,20 +37,35 @@ export default function NFTDrop() {
   };
 
   const bid = async (amount: string) => {
-    if (walletStore.provider && walletStore.address) {
-      auctionStore.bid(amount, walletStore.provider);
+    if (walletStore.provider && walletStore.address && nftId) {
+      auctionStore.bid(
+        collectionName,
+        BigNumber.from(nftId),
+        amount,
+        walletStore.provider
+      );
     }
   };
 
   const claim = async () => {
-    if (walletStore.provider && walletStore.address) {
-      auctionStore.claim(walletStore.provider);
+    if (walletStore.provider && walletStore.address && nftId) {
+      auctionStore.claim(
+        collectionName,
+        BigNumber.from(nftId),
+        walletStore.provider
+      );
     }
   };
 
   useEffect(() => {
-    if (walletStore.provider && walletStore.address) {
-      auctionStore.fetchInfo(walletStore.provider, walletStore.address, 3);
+    if (walletStore.provider && walletStore.address && nftId) {
+      auctionStore.fetchInfo(
+        collectionName,
+        BigNumber.from(nftId),
+        walletStore.provider,
+        walletStore.address,
+        3
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [walletStore.provider, walletStore.address]);
@@ -53,7 +76,13 @@ export default function NFTDrop() {
       walletStore.address &&
       walletStore.requiredNetwork.name === "Polygon"
     ) {
-      auctionStore.fetchInfo(walletStore.provider, walletStore.address, 3);
+      auctionStore.fetchInfo(
+        collectionName,
+        BigNumber.from(nftId),
+        walletStore.provider,
+        walletStore.address,
+        3
+      );
     }
   }, 5000);
 
@@ -70,13 +99,27 @@ export default function NFTDrop() {
     );
   }
 
+  if (collectionName === undefined || nftId === undefined) {
+    return (
+      <>
+        <div className="container mx-auto px-4 pb-10">
+          <div className="mt-20">
+            <h1 className="text-white text-2xl font-bold text-center">
+              Collection could not be found.
+            </h1>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <ReactTooltip effect="solid" multiline={true} />
       <div className="container mx-auto px-4 pb-10">
         <div className="mt-10">
           <h1 className="text-white text-4xl font-bold text-center">
-            Kang Gang 001
+            {auctionStore.nftName ?? "..."}
           </h1>
         </div>
 
@@ -91,7 +134,11 @@ export default function NFTDrop() {
               >
                 <ReactPlayer
                   ref={playerRef}
-                  url="https://ipfs.io/ipfs/QmdGsaQ6h7oFpTxXxd4FimxrRSqokJJtJvNaFS3tYjq17i"
+                  url={
+                    auctionStore.nftAnimationUrl
+                      ? makeIpfsLink(auctionStore.nftAnimationUrl)
+                      : ""
+                  }
                   playing
                   loop
                   muted
@@ -104,7 +151,11 @@ export default function NFTDrop() {
               </div>
               {!isVideoReady && (
                 <img
-                  src="https://ipfs.io/ipfs/QmVygN2po7yqa4P8f8YJ18cxnXbxNGGRAET98eJC7iKtMn"
+                  src={
+                    auctionStore.nftImageUrl
+                      ? makeIpfsLink(auctionStore.nftImageUrl)
+                      : ""
+                  }
                   alt="kang gang preview"
                 />
               )}
@@ -129,7 +180,9 @@ export default function NFTDrop() {
 
               <div className="flex pb-12 md:pb-0">
                 <div className="text-white text-md flex-1">Token ID</div>
-                <div className="text-white text-md text-right border-b">1</div>
+                <div className="text-white text-md text-right border-b">
+                  {nftId ?? "..."}
+                </div>
               </div>
             </div>
           </div>
@@ -426,3 +479,7 @@ function makeBidButtonText(
     ? "Add your bid"
     : "Enable bidding";
 }
+
+const makeIpfsLink = (url: string): string => {
+  return url.replace("https://gateway.pinata.cloud/", "https://ipfs.io/");
+};

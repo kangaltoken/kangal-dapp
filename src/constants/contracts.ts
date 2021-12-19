@@ -6,6 +6,7 @@ type KangalAddresses = {
   staking: string;
   bridge: string | null;
   auction: string | null;
+  kangGangNFT: string | null;
 };
 
 const addresses: Record<string, KangalAddresses> = {
@@ -17,6 +18,7 @@ const addresses: Record<string, KangalAddresses> = {
     staking: "0x222dc5cbc4d5082ac181532c01a57cc897ea4f15",
     bridge: "0xddafC76669C3aEB46832950f71592aAe68A94FDA",
     auction: null,
+    kangGangNFT: null,
   },
   bscTestnet: {
     kangal: "0x6deeceEF046b4fD841919ED970eB4721ce29B927",
@@ -26,6 +28,7 @@ const addresses: Record<string, KangalAddresses> = {
     staking: "0xE36139b9709B638Bb9DA3c47De823A05EEE3DaB0",
     bridge: null,
     auction: null,
+    kangGangNFT: null,
   },
   polygonMainnet: {
     kangal: "0x34f380a4e3389e99c0369264453523bbe5af7fab",
@@ -35,6 +38,7 @@ const addresses: Record<string, KangalAddresses> = {
     staking: "0x68a37C1cbBD49f693029F5749CA0b1D7c6d85A74",
     bridge: null,
     auction: "0x40098B8e8f9DBBaf351E5639A63f241229fE6295",
+    kangGangNFT: "0x6e765d26388a17a6e86c49a8e41df3f58abcd337",
   },
   polygonTestnet: {
     kangal: "0x34f380a4e3389e99c0369264453523bbe5af7fab",
@@ -44,6 +48,7 @@ const addresses: Record<string, KangalAddresses> = {
     staking: "0x68a37C1cbBD49f693029F5749CA0b1D7c6d85A74",
     bridge: null,
     auction: "0xCAa1BBa386FC413c82857A9dDeEBFC6656305695",
+    kangGangNFT: null,
   },
 };
 
