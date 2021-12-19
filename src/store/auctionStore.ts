@@ -80,7 +80,7 @@ const useAuctionStore = create<AuctionStore>(
       const metadata = await (await fetch(ipfsUrl)).json();
       const nftName = "Kang Gang " + metadata.name;
       const nftImageUrl = metadata.image;
-      const nftAnimationUrl = metadata.animationUrl;
+      const nftAnimationUrl = metadata.animation_url;
 
       const steak = ERC20__factory.connect(steakAddress, provider);
       const steakBalance = await steak.balanceOf(address);
