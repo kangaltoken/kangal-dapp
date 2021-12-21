@@ -75,12 +75,12 @@ export default function Navigation() {
 
       {/* Nav on mobile */}
       <nav className="lg:hidden flex-1 bg-black overflow-hidden">
-        <ul className="flex justify-center space-x-4">
+        <ul className="flex justify-center space-x-2">
           <li>
             <Link to="/">
               <div
                 className={
-                  "text-white py-2 px-6 rounded-2xl font-semibold tracking-wide text-xl " +
+                  "text-white py-2 px-6 rounded-2xl font-semibold tracking-wide text-lg " +
                   (location.pathname === "/" ? "glow" : "")
                 }
               >
@@ -92,7 +92,7 @@ export default function Navigation() {
             <Link to="/bridge">
               <div
                 className={
-                  "text-white py-2 px-6 rounded-2xl font-semibold tracking-wide text-xl " +
+                  "text-white py-2 px-6 rounded-2xl font-semibold tracking-wide text-lg " +
                   (location.pathname === "/bridge" ? "glow" : "")
                 }
               >
@@ -101,10 +101,10 @@ export default function Navigation() {
             </Link>
           </li>
           <li>
-            <Link to="/nftdrop">
+            <Link to="/nftdrop/kang-gang/2">
               <div
                 className={
-                  "text-white py-2 px-6 rounded-2xl font-semibold tracking-wide text-xl " +
+                  "text-white py-2 px-6 rounded-2xl font-semibold tracking-wide text-lg " +
                   (location.pathname.includes("/nftdrop") ? "glow" : "")
                 }
               >
