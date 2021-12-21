@@ -153,7 +153,7 @@ const useAuctionStore = create<AuctionStore>(
         provider.getSigner()
       );
       let parsedAmount = ethers.utils.parseUnits(amount);
-      const transaction = await auction.bid(1, parsedAmount);
+      const transaction = await auction.bid(nftId, parsedAmount);
 
       set((state) => {
         state.pendingTx = makeTxn(
