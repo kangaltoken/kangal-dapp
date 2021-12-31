@@ -1,14 +1,14 @@
-import useStakeStore from "../store/stakeStore";
 import useWalletStore from "../store/walletStore";
+import useTokenStore from "../store/tokenStore";
 
 export default function WithdrawTab() {
   const walletStore = useWalletStore();
-  const stakeStore = useStakeStore();
+  const tokenStore = useTokenStore();
 
   const withdraw = () => {
     if (walletStore.provider) {
-      if (!stakeStore.poolInfo.stakedBalance?.eq(0)) {
-        stakeStore.withdraw(walletStore.provider);
+      if (!tokenStore.poolInfo.stakedBalance?.eq(0)) {
+        tokenStore.withdrawStake(walletStore.provider);
       }
     }
   };

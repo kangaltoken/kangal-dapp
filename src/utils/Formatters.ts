@@ -16,6 +16,17 @@ export function formatAmount(
   return formatted;
 }
 
+export function formatUnits(
+  units: BigNumber | null,
+  maximumFractionDigits: number = 2,
+  compact: boolean = true
+): string {
+  if (units) {
+    return formatAmount(units, maximumFractionDigits, compact);
+  }
+  return "...";
+}
+
 export function shrinkAddress(
   address: string,
   charsFromStart: number = 6,

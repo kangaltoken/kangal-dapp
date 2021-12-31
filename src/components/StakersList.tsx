@@ -11,18 +11,21 @@ import emojiForNumber from "../utils/EmojiForNumber";
 
 interface IStakersList {
   userAddress: string;
+  requiredNetwork: string;
 }
 
 export default function StakersList(props: IStakersList) {
   const [allItems, setAllItems] = useState<IStakersListItem[]>([]);
 
   useEffect(() => {
+    let url = "https://kangaltoken.github.io/apis/";
+    let api = "staking_balances.json";
+    if (props.requiredNetwork === "Polygon") {
+      api = "staking_balances_polygon.json";
+    }
+
     const ms = Date.now();
-    fetch(
-      "https://kangaltoken.github.io/apis/staking_balances.json" +
-        "?dummy=" +
-        ms
-    )
+    fetch(`${url}${api}?dummy=${ms}`)
       .then((res) => res.json())
       .then(
         (result: any[]) => {
@@ -43,7 +46,7 @@ export default function StakersList(props: IStakersList) {
         (error) => {}
       );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [props]);
 
   function rowRenderer(rowProps: ListChildComponentProps) {
     return (

@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import Web3Modal from "web3modal";
 import create from "zustand";
 
-import useStakeStore from "../store/stakeStore";
+import useStakeStore from "./tokenStore";
 
 export type Network = {
   name: string;
@@ -75,15 +75,17 @@ const useWalletStore = create<WalletStore>((set, get) => ({
       state.networkWarning = `Please switch network to ${state.requiredNetwork.name}`;
     });
     try {
-      await window.ethereum.request(
-        network.chainId === 56 ? bscNetworkInfo : polygonNetworkInfo
-      );
-      set({
-        hasPendingConnect: false,
-        networkWarning: null,
-      });
       await useStakeStore.getState().onNetworkChange(network.name);
-      get().connect();
+      try {
+        await window.ethereum.request(
+          get().requiredNetwork.chainId === 56
+            ? bscNetworkInfo
+            : polygonNetworkInfo
+        );
+        get().connect();
+      } catch (error) {
+        console.log(error);
+      }
     } catch (error) {
       console.log(error);
     }
@@ -94,20 +96,19 @@ const useWalletStore = create<WalletStore>((set, get) => ({
         state.hasPendingConnect = false;
         state.networkWarning = `Please switch network to ${state.requiredNetwork.name}`;
       });
-    }
-    try {
-      await window.ethereum.request(
-        get().requiredNetwork.chainId === 56
-          ? bscNetworkInfo
-          : polygonNetworkInfo
-      );
-      set({
-        hasPendingConnect: false,
-        networkWarning: null,
-      });
+
+      try {
+        await window.ethereum.request(
+          get().requiredNetwork.chainId === 56
+            ? bscNetworkInfo
+            : polygonNetworkInfo
+        );
+        get().connect();
+      } catch (error) {
+        console.log(error);
+      }
+    } else {
       get().connect();
-    } catch (error) {
-      console.log(error);
     }
   },
 }));
@@ -137,8 +138,7 @@ if (window.ethereum) {
     hasMetamask: true,
   });
   windowProvider.on("network", (newNetwork, _) => {
-    let store = useWalletStore.getState();
-    store.onNetworkChange(newNetwork.chainId);
+    useWalletStore.getState().onNetworkChange(newNetwork.chainId);
   });
   window.ethereum.on("accountsChanged", (accounts: string[]) => {
     if (accounts.length > 0) {
@@ -185,7 +185,7 @@ const polygonNetworkInfo = {
         symbol: "MATIC",
         decimals: 18,
       },
-      rpcUrls: ["https://rpc-mainnet.matic.quiknode.pro"],
+      rpcUrls: ["https://rpc-mainnet.matic.network"],
       blockExplorerUrls: ["https://polygonscan.com"],
     },
   ],

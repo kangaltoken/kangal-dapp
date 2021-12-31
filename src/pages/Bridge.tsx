@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useState } from "react";
 
 import SelectView from "../components/SelectView";
+import SteakBridge from "../components/SteakBridge";
 
 interface Asset {
   name: string;
@@ -59,7 +60,11 @@ export default function Bridge() {
             <div className="font-semibold">Move</div>
             <SelectView
               options={assets.map((value) => {
-                return <option value={value.name}>{value.uiName}</option>;
+                return (
+                  <option key={value.name} value={value.name}>
+                    {value.uiName}
+                  </option>
+                );
               })}
               value={selectedAsset.name}
               onChange={(value) => {
@@ -77,7 +82,11 @@ export default function Bridge() {
               <div className="font-semibold">From</div>
               <SelectView
                 options={fromChainOptions.map((value) => {
-                  return <option value={value.name}>{value.uiName}</option>;
+                  return (
+                    <option key={value.name} value={value.name}>
+                      {value.uiName}
+                    </option>
+                  );
                 })}
                 value={fromChain.name}
                 onChange={(value) => {
@@ -95,7 +104,11 @@ export default function Bridge() {
               <div className="font-semibold">To</div>
               <SelectView
                 options={toChainOptions.map((value) => {
-                  return <option value={value.name}>{value.uiName}</option>;
+                  return (
+                    <option key={value.name} value={value.name}>
+                      {value.uiName}
+                    </option>
+                  );
                 })}
                 value={toChain.name}
                 onChange={(value) => {
@@ -122,7 +135,7 @@ export default function Bridge() {
             <AnySwapInfo from={fromChain.uiName} to={toChain.uiName} />
           )}
 
-        {selectedAsset.name === "steak" && <SteakBridgeInfo />}
+        {selectedAsset.name === "steak" && <SteakBridge />}
       </div>
     </>
   );
@@ -183,12 +196,6 @@ const AnySwapInfo = ({ from, to }: { from: string; to: string }) => (
     >
       AnySwap Telegram
     </a>
-  </div>
-);
-
-const SteakBridgeInfo = () => (
-  <div className="p-6 mt-4 bg-white rounded-lg shadow-sm">
-    <p>Coming soon!</p>
   </div>
 );
 
